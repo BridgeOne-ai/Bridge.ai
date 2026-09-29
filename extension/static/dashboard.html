@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bridge.ai</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="shell" id="overview" hidden>
+    <aside class="sidebar">
+      <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 15c2-6 5-6 9 0s7 6 9 0"/></svg></span>Bridge.ai<i class="dot" id="side-dot"></i></div>
+      <div class="pill mono" id="side-model"></div>
+      <nav>
+        <a href="#top" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Overview</a>
+        <a href="#timeline"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 4 8-9"/></svg>Timeline</a>
+        <a href="#feelings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.3 1.5 3.5 1.5 3.5-1.5 3.5-1.5M9 9.5h.01M15 9.5h.01"/></svg>Feelings</a>
+        <a href="#chatbots"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chatbots</a>
+      </nav>
+      <div class="side-foot">
+        <div class="mode-card">
+          <div class="row mono"><span id="side-mode"></span><b id="side-mode-state"></b></div>
+          <div class="meter"><i id="side-meter"></i></div>
+        </div>
+        <div class="mono faint small">Bridge.ai · on this computer</div>
+      </div>
+    </aside>
+
+    <main id="top">
+      <div class="strip">
+        <div class="chip mono" id="chip-level"></div>
+        <div class="chip mono" id="chip-messages"></div>
+        <div class="chip plain mono" id="chip-time"></div>
+        <div class="strip-end">
+          <button class="icon-btn" id="open-options" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+          <div class="who"><span class="avatar" id="who-avatar" aria-hidden="true"></span><div><div class="mono" id="who-name"></div><div class="mono faint small" id="who-sub"></div></div></div>
+        </div>
+      </div>
+
+      <section class="card hero">
+        <div>
+          <div class="crumbs mono"><span class="accent">Bridge.ai</span><span class="faint">/</span><span class="muted">Feelings in AI chats</span></div>
+          <div class="tag mono"><i></i>Read on this computer · never stored as text</div>
+          <h1 id="title">Mood &amp; Chat Overview</h1>
+        </div>
+        <div class="hero-controls">
+          <div class="seg mono" role="radiogroup" aria-label="Time range">
+            <button role="radio" aria-checked="true" data-range="today">Today</button>
+            <button role="radio" aria-checked="false" data-range="week">Last 7 days</button>
+          </div>
+          <div class="btns">
+            <button class="btn-outline mono" id="print"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Print summary</button>
+            <button class="btn-primary" id="settings-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Settings</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="callout" id="crisis" hidden>
+        <strong>Crisis language came up in the last day.</strong>
+        If someone may be in danger, contact local emergency services or a crisis line now. Bridge.ai is not a safety guarantee.
+      </div>
+      <p class="card empty" id="empty" hidden></p>
+
+      <div class="grid three">
+        <section class="card">
+          <div class="card-head"><div><div class="eyebrow mono">Most common feeling</div><h2>Current dominant feeling</h2></div><span class="tag mono" id="balance-tag"></span></div>
+          <div class="dominant">
+            <div class="ring-tile"><div class="ring" id="ring"><div class="ring-in"><b id="ring-share"></b><small class="mono">of feelings</small></div></div></div>
+            <div class="dominant-text">
+              <div class="big-word" id="dominant-name"></div>
+              <div class="mono small accent" id="dominant-sub"></div>
+              <dl class="mini">
+                <div><dt class="mono">Harder</dt><dd class="mono" id="hard-count"></dd></div>
+                <div><dt class="mono">Good</dt><dd class="mono" id="good-count"></dd></div>
+              </dl>
+            </div>
+          </div>
+          <div class="foot mono small"><span class="muted" id="updated"></span></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><div><div class="eyebrow mono">7-day pattern</div><h2>Relationship score</h2></div><span id="level-badge"></span></div>
+          <div class="score"><span class="hero-num" id="score"></span><span class="of">/ 10</span></div>
+          <p class="sub" id="score-sub"></p>
+          <div class="meters" id="signals"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><div><div class="eyebrow mono">When</div><h2>Late-night chatting</h2></div></div>
+          <div class="score"><span class="hero-num" id="late-share"></span></div>
+          <p class="sub">of messages sent between 11pm and 5am, over the last 7 days</p>
+          <div class="spark-box"><canvas id="spark" role="img" aria-label="Feelings picked up by hour"></canvas></div>
+          <div class="soft-tile"><span class="muted mono small">Late-night sessions</span><b class="mono" id="late-sessions"></b></div>
+        </section>
+      </div>
+
+      <div class="grid wide" id="timeline">
+        <section class="card">
+          <div class="card-head">
+            <div><div class="eyebrow mono">Through the day</div><h2>Harder and good feelings by hour</h2></div>
+            <div class="legend mono small"><span><i class="key hard"></i>Harder</span><span><i class="key good"></i>Good</span></div>
+          </div>
+          <div class="chart-panel"><div class="chart-box"><canvas id="hours-chart" role="img" aria-label="Harder and good feelings by hour"></canvas></div></div>
+          <div class="tiles">
+            <div class="soft-tile"><span class="ico warn">!</span><div><div class="muted mono small">Hardest hour</div><b id="peak-hour"></b></div></div>
+            <div class="soft-tile"><span class="ico">◌</span><div><div class="muted mono small">Held back</div><b id="held"></b></div></div>
+            <div class="soft-tile"><span class="ico">⌁</span><div><div class="muted mono small">Personal info paused</div><b id="paused"></b></div></div>
+          </div>
+          <details><summary class="mono small">Show as a table</summary><table id="hours-table"></table></details>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><div><h2>Notes</h2><div class="mono small faint">Worked out from the counts, not written by AI</div></div></div>
+          <ul class="notes" id="notes"></ul>
+          <div class="eyebrow mono">Behind the score</div>
+          <ul class="reasons" id="reasons"></ul>
+        </section>
+      </div>
+
+      <div class="grid three" id="feelings">
+        <section class="card">
+          <div class="card-head"><div><div class="eyebrow mono">Last 7 days</div><h2>Feelings by day</h2></div></div>
+          <div class="chart-box short"><canvas id="week-chart" role="img" aria-label="Harder and good feelings by day"></canvas></div>
+          <div class="soft-tile"><span class="muted mono small">Harder vs good this week</span><b class="mono" id="week-balance"></b></div>
+          <details><summary class="mono small">Show as a table</summary><table id="week-table"></table></details>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><div><div class="eyebrow mono">Every feeling</div><h2>Feelings picked up</h2></div></div>
+          <div class="flist-head mono small"><span><i class="key hard"></i>Harder</span></div>
+          <ul class="flist" id="hard-list"></ul>
+          <div class="flist-head mono small"><span><i class="key good"></i>Good</span></div>
+          <ul class="flist" id="good-list"></ul>
+          <p class="mono small muted" id="life"></p>
+        </section>
+
+        <section class="card" id="chatbots">
+          <div class="card-head"><div><div class="eyebrow mono">Where</div><h2>Chatbots</h2></div></div>
+          <div id="site-list"></div>
+          <div class="eyebrow mono">Safety gate</div>
+          <div class="pair">
+            <div class="soft-tile col"><span class="muted mono small">Held back as unsafe</span><b id="gate-unsafe"></b></div>
+            <div class="soft-tile col"><span class="muted mono small">Friend or partner chatbot</span><b id="gate-rel"></b></div>
+          </div>
+          <p class="mono small muted" id="privacy-kinds"></p>
+        </section>
+      </div>
+      <p class="mono small faint footer">Messages are read on this computer and never stored. Bridge.ai is a supplement to talking with each other, not a safety guarantee.</p>
+    </main>
+  </div>
+
+  <div class="gate" id="gate" hidden>
+    <form class="card" id="gate-form">
+      <h2>Parent PIN</h2>
+      <p class="muted">This browser is in Child mode. Enter the parent PIN to see the dashboard.</p>
+      <input id="gate-pin" type="password" inputmode="numeric" autocomplete="off" aria-label="Parent PIN" />
+      <p class="error" id="gate-error" role="alert"></p>
+      <button type="submit" class="btn-primary">Open dashboard</button>
+    </form>
+  </div>
+  <script src="dashboard.js"></script>
+</body>
+</html>

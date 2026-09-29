@@ -1,0 +1,33 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
+# Eval
+eval/data/labels_cache.jsonl
+.pytest_cache/
+
+# Claude Code and planning files (local to whoever is working on the repo)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+PLAN.md
+PLANS.md
+TODO.md
+NOTES.md
+*.plan.md
+plans/

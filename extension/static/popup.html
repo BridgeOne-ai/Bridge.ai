@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Bridge.ai</title>
+  <style>
+    :root {
+      --bg: #ffffff; --text: #1f1f1f; --muted: #6b6f76; --track: #e8eaed; --btn: #f1f3f4; --btn-hover: #e3e5e8;
+      --accent: #0b57d0; --on-accent: #fff; --error: #b3261e;
+      --hard: #4a3aa7; --good: #1baf7a; --other: #9aa0a6; --life: #7a8494;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #202020; --text: #ececec; --muted: #9a9a9a; --track: #353535; --btn: #2c2c2c; --btn-hover: #383838;
+        --accent: #a8c7fa; --on-accent: #062e6f; --error: #f2b8b5;
+        --hard: #9085e9; --good: #199e70; --other: #6b6f76; --life: #aab3c0;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { width: 300px; margin: 0; padding: 14px 16px; background: var(--bg); color: var(--text);
+      font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 20px; background: var(--btn); margin-bottom: 14px; }
+    .modes button { height: 30px; border-radius: 15px; background: none; }
+    .modes button[aria-checked="true"] { background: var(--bg); box-shadow: 0 1px 3px rgba(0,0,0,.15); font-weight: 600; }
+    #pin { display: grid; gap: 8px; margin-bottom: 14px; }
+    #pin input { height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--track); background: var(--bg); color: var(--text); font: inherit; }
+    #pin .error { color: var(--error); font-size: 12px; min-height: 1em; }
+    h1 { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    #feelings { display: grid; gap: 14px; max-height: 380px; overflow-y: auto; }
+    .row .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .row .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .bar i { height: 6px; border-radius: 3px; background: var(--track); }
+    .row.hard .bar i.on { background: var(--hard); }
+    .row.good .bar i.on { background: var(--good); }
+    .row.other .bar i.on { background: var(--other); }
+    .row.life .bar i.on { background: var(--life); }
+    .empty, .note, #model { color: var(--muted); }
+    .empty { padding: 4px 0 8px; }
+    .note, #model { font-size: 12px; margin: 12px 0 0; }
+    .actions { display: flex; gap: 8px; margin-top: 14px; }
+    button { flex: 1; height: 34px; border: 0; border-radius: 17px; cursor: pointer; font: 500 13px system-ui, -apple-system, sans-serif;
+      background: var(--btn); color: var(--text); }
+    button:hover { background: var(--btn-hover); }
+    button.primary { background: var(--accent); color: var(--on-accent); }
+    button:disabled { opacity: .6; cursor: default; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="modes" role="radiogroup" aria-label="Mode">
+    <button id="mode-parent" role="radio" aria-checked="false" title="Track your own feelings. Nothing is shared or blocked.">Parent</button>
+    <button id="mode-child" role="radio" aria-checked="false" title="Protect a child: dangerous messages are held back and the week is shared with the parent dashboard.">Child</button>
+  </div>
+
+  <form id="pin" hidden>
+    <label id="pin-label" for="pin-1"></label>
+    <input id="pin-1" type="password" inputmode="numeric" autocomplete="off" />
+    <input id="pin-2" type="password" inputmode="numeric" autocomplete="off" placeholder="Type it again" hidden />
+    <div class="error" id="pin-error" role="alert"></div>
+    <div class="actions" style="margin-top:0">
+      <button type="button" id="pin-cancel">Cancel</button>
+      <button type="submit" class="primary">OK</button>
+    </div>
+  </form>
+
+  <h1 id="title"></h1>
+  <div id="feelings"></div>
+  <p class="note" id="note"></p>
+  <p id="model" hidden></p>
+  <div class="actions">
+    <button id="dashboard">Dashboard</button>
+    <button id="reset" hidden title="Deletes this browser's Bridge.ai data (not the account or settings)">Reset</button>
+    <button id="sync-now" hidden>Sync now</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

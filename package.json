@@ -1,0 +1,15 @@
+{
+  "name": "bridge",
+  "private": true,
+  "workspaces": [
+    "core",
+    "extension",
+    "dashboard"
+  ],
+  "scripts": {
+    "build": "npm run build -w core && npm run build -w extension",
+    "test": "npm test -w core && npm test -w extension",
+    "dev:dashboard": "npm run dev -w dashboard"
+  },
+  "license": "MIT"
+}

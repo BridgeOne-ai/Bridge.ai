@@ -1,0 +1,24 @@
+[project]
+name = "bridge"
+version = "0.1.0"
+description = "Bridge.ai: tracks feelings and unhealthy patterns in AI chats. Eval harness and sync API."
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "openai>=3.19.2",
+    "python-dotenv",
+]
+
+[dependency-groups]
+dev = [
+    "pymongo-inmemory>=0.5.0",
+    "pytest",
+]
+api = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pymongo",
+    "pwdlib[argon2]>=0.3.1",
+    "email-validator>=2.3.0",
+]
