@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- The Download button always gets the newest GitHub Release (.github/workflows/release.yml). -->
+  <!-- Download buttons (data-install) get the zip built into the site (.github/workflows/pages.yml) and open the install guide (install.js). -->
   <header class="nav">
     <div class="wrap">
       <a class="brand" href="#top" aria-label="Bridge.ai home">
@@ -23,7 +23,7 @@
         <a href="#install">Install</a>
         <a href="#faq">FAQ</a>
       </nav>
-      <a class="btn primary small" href="https://github.com/BridgeOne-ai/Bridge.ai/releases/latest/download/bridge-ai-extension.zip">Download</a>
+      <a class="btn primary small" href="download/bridge-ai-extension.zip" data-install>Download</a>
     </div>
   </header>
 
@@ -35,7 +35,7 @@
           <h1>Feel better about how you use AI chatbots.</h1>
           <p class="lead">Bridge.ai is a Chrome extension that notices how you feel when you talk to ChatGPT and Gemini, catches personal information before you send it, and protects children from risky conversations. A model inside your browser does the reading, so nothing you write ever leaves your computer.</p>
           <div class="cta">
-            <a class="btn primary" href="https://github.com/BridgeOne-ai/Bridge.ai/releases/latest/download/bridge-ai-extension.zip">
+            <a class="btn primary" href="download/bridge-ai-extension.zip" data-install>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
               Download for Chrome
             </a>
@@ -158,7 +158,7 @@
             <div>
               <h3>Download and unzip</h3>
               <p>Download <code>bridge-ai-extension.zip</code> and unzip it. You'll get a folder called <code>bridge-ai</code>. Keep it somewhere permanent, like Documents: Chrome loads Bridge.ai from that folder.</p>
-              <a class="btn primary small" href="https://github.com/BridgeOne-ai/Bridge.ai/releases/latest/download/bridge-ai-extension.zip">Download the latest version</a>
+              <a class="btn primary small" href="download/bridge-ai-extension.zip" data-install>Download the latest version</a>
             </div>
           </li>
           <li>
@@ -227,7 +227,7 @@
             <h2>Try Bridge.ai</h2>
             <p>Free, open source, and private by design.</p>
           </div>
-          <a class="btn" href="https://github.com/BridgeOne-ai/Bridge.ai/releases/latest/download/bridge-ai-extension.zip">Download for Chrome</a>
+          <a class="btn" href="download/bridge-ai-extension.zip" data-install>Download for Chrome</a>
         </div>
       </div>
     </section>
@@ -246,5 +246,6 @@
       </div>
     </div>
   </footer>
+  <script src="install.js"></script>
 </body>
 </html>

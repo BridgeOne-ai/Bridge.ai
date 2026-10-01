@@ -34,3 +34,6 @@ TODO.md
 NOTES.md
 *.plan.md
 plans/
+
+# Built into the website by .github/workflows/pages.yml (npm run package), never committed
+website/download/
