@@ -7,10 +7,17 @@ import { mountShadow } from "../src/ui/shadow";
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
 
 // One guard for the whole file (it listens on window); each test gets fresh page elements.
-let strict = false;
+// Parent mode unless a test sets `child`; in Child mode `approve` is the parent's answer to the PIN window.
+let child = false;
+let approve = false;
+let asked = 0;
+let active = true;
 const reports: [string, string[], string][] = [];
 const root = mountShadow();
-startPrivacyGuard({ root, selectors: SELECTORS, isStrict: async () => strict, isChild: async () => true, report: (...a) => reports.push(a) });
+startPrivacyGuard({
+  root, selectors: SELECTORS, isChild: async () => child, isActive: () => active, report: (...a) => reports.push(a),
+  askParent: async () => { asked++; return approve; },
+});
 
 let sends = 0;
 let files = 0;
@@ -35,7 +42,7 @@ const card = () => root.querySelector(".privacy");
 const closeCard = () => card()!.querySelector<HTMLButtonElement>("button.x")!.click();
 const button = (label: string) => [...(card()?.querySelectorAll("button") ?? [])].find((b) => b.textContent === label);
 
-beforeEach(() => { sends = 0; files = 0; strict = false; reports.length = 0; card()?.remove(); });
+beforeEach(() => { sends = 0; files = 0; child = false; approve = false; asked = 0; active = true; reports.length = 0; card()?.remove(); });
 
 describe("typed messages", () => {
   it("lets clean messages through, by Enter or the send button", async () => {
@@ -56,7 +63,7 @@ describe("typed messages", () => {
     expect(card()).not.toBeNull();
   });
 
-  it("always blocks card numbers: no 'Send anyway', even with strict mode off", async () => {
+  it("always blocks card numbers: no 'Send anyway', in either mode", async () => {
     const { editor, send } = page("brand-new-gemini-editor");
     type(editor, "4111.1111.1111.1111");
     send.click();
@@ -140,13 +147,57 @@ describe("typed messages", () => {
     expect(reports.at(-1)![2]).toBe("held");
   });
 
-  it("strict mode removes 'Send anyway' for everything", async () => {
-    strict = true;
+  it("Child mode: no 'Send anyway'; masking works without a parent", async () => {
+    child = true;
+    const { editor, send } = page("ql-editor");
+    let sentText = "";
+    send.addEventListener("click", () => { sentText = editor.textContent ?? ""; });
+    type(editor, "text me at 305-555-0100");
+    enter(editor);
+    await tick();
+    expect([...card()!.querySelectorAll(".actions button")].map((b) => b.textContent)).toEqual(["Send without these details", "Ask a parent to send"]);
+    button("Send without these details")!.click();
+    await tick(300);
+    expect(asked).toBe(0);
+    expect(sentText).toBe("text me at [phone number removed]");
+  });
+
+  it("Child mode: 'Ask a parent to send' sends as typed only once a parent approves", async () => {
+    child = true;
     const { editor } = page("x");
     type(editor, "my email is jake.miller2011@gmail.com");
     enter(editor);
     await tick();
+    button("Ask a parent to send")!.click();
+    await tick();
+    expect(asked).toBe(1);
+    expect(sends).toBe(0); // the parent said no
+    approve = true;
+    button("Not approved. Ask again")!.click();
+    await tick();
+    expect(asked).toBe(2);
+    expect(sends).toBe(1);
+    expect(reports.at(-1)).toEqual(["message", ["email"], "sent"]);
+  });
+
+  it("Child mode: card numbers can't be sent even with a parent's approval (masking only)", async () => {
+    child = true;
+    approve = true;
+    const { editor } = page("x");
+    type(editor, "my card is 4111 1111 1111 1111");
+    enter(editor);
+    await tick();
+    expect(button("Ask a parent to send")).toBeUndefined();
     expect(button("Send anyway")).toBeUndefined();
+  });
+
+  it("turned off (consent withdrawn): nothing is checked or held", async () => {
+    active = false;
+    const { editor } = page("x");
+    type(editor, "my card is 4111 1111 1111 1111");
+    expect(enter(editor)).toBe(true); // not cancelled
+    await tick();
+    expect(card()).toBeNull();
   });
 });
 

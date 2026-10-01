@@ -1,12 +1,16 @@
 // Turns what the extension keeps in chrome.storage into what the dashboard shows. Pure: no chrome APIs,
 // so it's tested directly (test/dashboard-data.test.ts). Labels and counts only, never text.
 import { core } from "@bridge/core";
-import { LEVELS, TOPICS, type DayBucket, type Level, type Profile, type ScoreResult, type Site, type Topic } from "../../../core/src/types";
+import {
+  INTEREST_CATEGORIES, INTEREST_CATEGORY, INTERESTS, LEVELS, TOPICS,
+  type DayBucket, type Interest, type InterestCategory, type Level, type Profile, type ScoreResult, type Site, type Topic,
+} from "../../../core/src/types";
 import { dayKey, shiftDay } from "../../../core/src/time";
 import { feelingGroup, type FeelingGroup } from "../ui/topics";
-import { maskAbuse, type DayLog, type HourlyTopics, type PerDaySite, type PrivacyEntry } from "../sync/aggregate";
+import type { DayLog, HourlyTopics, PerDaySite, PrivacyEntry } from "../days";
 import type { Mode } from "../storage";
 import type { Finding } from "../privacy/detect";
+import { isPaused, pausedMs, type Pause, type PausePeriod } from "../pause";
 
 export type Range = "today" | "week";
 
@@ -23,6 +27,8 @@ export interface DashboardInput {
   hourly: HourlyTopics;
   nudgeLog: PerDaySite;
   privacyFlags: DayLog<PrivacyEntry>;
+  pause?: Pause | null;
+  pauseLog?: PausePeriod[];
 }
 
 export interface SiteRow {
@@ -41,6 +47,8 @@ export interface DashboardView {
   messages: number;
   // Every topic that came up, most first, by group.
   feelings: Record<FeelingGroup, Count[]>;
+  // What chats were about, by category, most first. Only categories that came up.
+  interests: { category: InterestCategory; count: number; items: { interest: Interest; count: number }[] }[];
   dominant: (Count & { share: number }) | null;     // the most frequent feeling
   balance: { hard: number; good: number };          // feeling mentions in the range
   hours: { hour: number; hard: number; good: number }[];           // 24 rows, local hours
@@ -57,22 +65,29 @@ export interface DashboardView {
   // The safety gate: messages held back, and (Parent mode) relationship warnings sent anyway. Never
   // the words, and never which danger category ("unsafe"), so abuse at home can't be revealed.
   heldBack: { unsafe: number; relationship: number; relationshipSentAnyway: number };
+  // What happened to paused messages: sent with the details removed, or (Child mode) sent after a parent
+  // approved with the PIN.
+  outcomes: { masked: number; approved: number };
+  // Tracking paused (pause.ts): minutes in the range, and the active pause's end if one is on.
+  paused: { minutes: number; now: boolean; until: number | null };
   insights: string[];
 }
 
 const SITE_NAME: Record<Site, string> = { gemini: "Gemini", chatgpt: "ChatGPT", claude: "Claude", characterai: "Character.AI" };
 export const siteName = (s: Site) => SITE_NAME[s];
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-export const hourName = (h: number) => (h === 0 ? "12am" : h < 12 ? `${h}am` : h === 12 ? "12pm" : `${h - 12}pm`);
+const pausedFor = (min: number) => (min < 60 ? plural(min, "minute") : `${(min / 60).toFixed(1)} hours`);
+export const hourName =(h: number) => (h === 0 ? "12am" : h < 12 ? `${h}am` : h === 12 ? "12pm" : `${h - 12}pm`);
 
 export function buildView(input: DashboardInput): DashboardView {
   const today = dayKey(input.now);
   const days = input.range === "today" ? [today] : Array.from({ length: 7 }, (_, i) => shiftDay(today, 6 - i));
   const inRange = new Set(days);
-  // In Child mode a parent is looking, so the same privacy rules as the sync apply (sync/aggregate.ts):
-  // abuse-aware masking here, and excluded topics are never read below.
-  const visible = (p: Profile): Profile => ({ site: p.site, days: input.mode === "child" ? maskAbuse(p.days) : p.days });
-  const profiles = Object.values(input.profiles).filter((p): p is Profile => !!p).map(visible);
+  // In Child mode a parent is looking, and they see only what was held back (the privacy log): the
+  // child's feelings, interests, time and hours aren't read at all, so no view can show them.
+  const child = input.mode === "child";
+  const profiles = child ? [] : Object.values(input.profiles).filter((p): p is Profile => !!p);
+  if (child) input = { ...input, hourly: {}, nudgeLog: {} };
   const rangeDays: DayBucket[] = profiles.flatMap((p) => p.days.filter((d) => inRange.has(d.date)));
   const sum = (f: (d: DayBucket) => number) => rangeDays.reduce((n, d) => n + f(d), 0);
 
@@ -83,6 +98,17 @@ export function buildView(input: DashboardInput): DashboardView {
     .sort((a, b) => b.count - a.count || TOPICS.indexOf(a.topic) - TOPICS.indexOf(b.topic));
   const feelings = { hard: [], good: [], other: [], life: [] } as Record<FeelingGroup, Count[]>;
   for (const t of topics) feelings[feelingGroup(t.topic)].push(t);
+  const interestCounts = new Map<Interest, number>();
+  for (const d of rangeDays) for (const [i, n] of Object.entries(d.interestCounts ?? {}) as [Interest, number][]) interestCounts.set(i, (interestCounts.get(i) ?? 0) + n);
+  const interests = INTEREST_CATEGORIES
+    .map((category) => {
+      const items = INTERESTS.filter((i) => INTEREST_CATEGORY[i] === category && interestCounts.get(i))
+        .map((interest) => ({ interest, count: interestCounts.get(interest)! }))
+        .sort((a, b) => b.count - a.count);
+      return { category, count: items.reduce((n, x) => n + x.count, 0), items };
+    })
+    .filter((c) => c.count)
+    .sort((a, b) => b.count - a.count);
   const felt = topics.filter((t) => feelingGroup(t.topic) !== "life");
   const feltTotal = felt.reduce((n, t) => n + t.count, 0);
   const dominant = felt[0] ? { ...felt[0], share: felt[0].count / feltTotal } : null;
@@ -160,6 +186,7 @@ export function buildView(input: DashboardInput): DashboardView {
     empty: messages === 0 && sites.length === 0 && all.length === 0,
     messages,
     feelings,
+    interests,
     dominant,
     balance,
     hours,
@@ -173,6 +200,12 @@ export function buildView(input: DashboardInput): DashboardView {
     nudges: sites.reduce((n, s) => n + s.nudges, 0),
     privacy: { total: flags.length, kinds: [...kindCounts].map(([finding, count]) => ({ finding, count })).sort((a, b) => b.count - a.count) },
     heldBack,
+    outcomes: { masked: all.filter((f) => f.hidden).length, approved: all.filter((f) => f.approved).length },
+    paused: {
+      minutes: Math.round(pausedMs(input.pauseLog ?? [], input.pause ?? null, new Date(`${days[0]}T00:00`).getTime(), input.now) / 60_000),
+      now: isPaused(input.pause ?? null, input.now),
+      until: input.pause?.until ?? null,
+    },
     insights: [],
   };
   view.insights = insights(view);
@@ -182,8 +215,10 @@ export function buildView(input: DashboardInput): DashboardView {
 // Plain observations from the numbers above. Written without "you" or "your child", so they read
 // right in both modes. Never a diagnosis.
 function insights(v: DashboardView): string[] {
-  if (v.empty) return [];
   const out: string[] = [];
+  // First, so a quiet stretch is explained before anything is read into it. Shown even when empty.
+  if (v.paused.minutes) out.push(`Tracking was paused for ${pausedFor(v.paused.minutes)}, so nothing from that time is counted.`);
+  if (v.empty) return out;
   const peak = v.hours.reduce((m, h) => (h.hard > m.hard ? h : m), v.hours[0]);
   if (peak.hard >= 2) out.push(`Harder feelings came up most around ${hourName(peak.hour)}.`);
   if (v.messages >= 5 && v.lateNight.share >= 0.25) out.push(`${Math.round(v.lateNight.share * 100)}% of messages were sent between 11pm and 5am.`);

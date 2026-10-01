@@ -1,5 +1,5 @@
 import type { Turn, TurnLabels } from "../src/types.js";
-import { EXCLUDED_TOPICS, TOPICS } from "../src/types.js";
+import { EXCLUDED_TOPICS, INTERESTS, TOPICS } from "../src/types.js";
 import { SAFETY_CATEGORIES } from "../src/safety.js";
 import type { Matcher, Scores } from "../src/semantic/matcher.js";
 
@@ -10,7 +10,7 @@ export const turn = (text: string, role: Turn["role"] = "user", ts = BASE): Turn
   ({ id: `t:${role}:0`, site: "gemini", conversationId: "t", role, text, ts });
 
 export const labels = (o: Partial<TurnLabels> = {}): TurnLabels => ({
-  topics: [], dependency: false, isolation: false, botHook: false, crisis: false,
+  topics: [], interests: [], dependency: false, isolation: false, botHook: false, crisis: false,
   abuseAtHome: false, excludedTopics: [], source: "rules", ...o,
 });
 
@@ -23,6 +23,7 @@ export function scores(high: Record<string, number> = {}): Scores {
     flags: pick(["dependency", "isolation", "botHook", "crisis", "abuseAtHome"]),
     safety: pick(SAFETY_CATEGORIES),
     whereabouts: high.whereabouts ?? 0,
+    interests: pick(INTERESTS),
   } as Scores;
 }
 

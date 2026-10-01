@@ -14,7 +14,7 @@ const checked: string[] = [];
 const reports: [string, string[], string][] = [];
 const root = mountShadow();
 startPrivacyGuard({
-  root, selectors: SELECTORS, isStrict: async () => false, isChild: async () => true, report: (...a) => reports.push(a),
+  root, selectors: SELECTORS, isChild: async () => true, askParent: async () => false, report: (...a) => reports.push(a),
   checkSafety: async (text) => { checked.push(text); return verdict; },
 });
 

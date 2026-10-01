@@ -7,7 +7,8 @@ import { checkSafety } from "../../../core/src/safety";
 import { decide, type GateDecision } from "../policy";
 import type { ModelReply, ModelRequest, ToContent, ToOffscreen, ToWorker } from "../messages";
 import * as store from "../storage";
-import { buildPayload, pruneDays } from "../sync/aggregate";
+import * as pause from "../pause";
+import { pruneDays } from "../days";
 import NUDGES from "../ui/nudges.json";
 import type { Finding } from "../privacy/detect";
 import type { PauseOutcome } from "../ui/privacy";
@@ -16,7 +17,6 @@ const PENDING_MS = 60_000;
 const SESSION_IDLE_MS = 10 * 60_000;
 const LATE_NIGHT_MIN_MS = 60 * 60_000;
 const NUDGES_PER_DAY = 3;
-const SYNC_DEBOUNCE_MS = 5_000;
 // Heartbeats come every 30 s while the user is active. A longer gap (laptop asleep, tab in the
 // background) is not counted as time on AI.
 const MAX_BEAT_GAP_MS = 2 * 60_000;
@@ -34,16 +34,16 @@ const storageLock = new Mutex();
 const locked = <T>(fn: () => Promise<T>) => storageLock.runExclusive(fn);
 
 // Created on every worker start, not only onInstalled: alarms added in an update don't exist otherwise.
-for (const name of ["sessions", "sync"]) {
-  // Chrome rejects with "No SW" if the extension is reloaded mid-startup; the next start retries.
-  void chrome.alarms.get(name).then((a) => a ?? chrome.alarms.create(name, { periodInMinutes: 1 })).catch(() => {});
-}
+// Chrome rejects with "No SW" if the extension is reloaded mid-startup; the next start retries.
+void chrome.alarms.get("sessions").then((a) => a ?? chrome.alarms.create("sessions", { periodInMinutes: 1 })).catch(() => {});
+// From versions that synced to a server: their alarm and their account, sync status and device id.
+void chrome.alarms.clear("sync").catch(() => {});
+void chrome.storage.local.remove(store.OLD_KEYS).catch(() => {});
 chrome.alarms.onAlarm.addListener((a) => {
-  if (a.name === "sessions") void locked(() => closeIdleSessions(Date.now()));
-  if (a.name === "sync") void syncNow();
+  if (a.name === "sessions") void locked(async () => { await closeIdleSessions(Date.now()); await pause.current(); });
 });
 
-// First install opens the Options page, where the user picks Parent or Child mode.
+// First install opens the Options page: setup (consent, Parent or Child mode) comes before anything is read.
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === chrome.runtime.OnInstalledReason.INSTALL) void chrome.runtime.openOptionsPage();
 });
@@ -51,15 +51,25 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 chrome.runtime.onMessage.addListener((msg: ToWorker, sender, sendResponse) => {
   const tabId = sender.tab?.id;
   if (msg.type === "turn") void onTurn(msg.turn, tabId);
-  if (msg.type === "dashboard-session") void adoptDashboardSession(msg.token, msg.email);
   if (msg.type === "heartbeat") void locked(() => onHeartbeat(msg.site, msg.ts, msg.interacting, tabId));
-  if (msg.type === "sync-now") void syncNow();
   if (msg.type === "privacy-pause") void locked(() => onPrivacyPause(msg.site, msg.what, msg.findings, msg.outcome));
   if (msg.type === "model-status") void store.set("modelStatus", msg.status);
   // RPC: the content script waits for this answer before the message may reach the chatbot.
   if (msg.type === "safety-check") {
     void safetyCheck(msg.site, msg.text).then(sendResponse);
     return true; // keeps the channel open for the async sendResponse
+  }
+  if (msg.type === "parent-approval") {
+    void askParent(msg.site, msg.what, msg.findings).then(sendResponse);
+    return true;
+  }
+  if (msg.type === "approval-details") {
+    sendResponse(approvals.get(msg.id)?.details ?? null);
+    return false;
+  }
+  // Only the approval window may answer (not a content script on a chat page).
+  if (msg.type === "approval-result" && sender.url?.startsWith(chrome.runtime.getURL("approve.html"))) {
+    answerApproval(msg.id, msg.approved);
   }
   return false;
 });
@@ -98,16 +108,30 @@ void askModel({ kind: "warmup" }, 1_000);
 
 // ---- mode (Parent or Child, see storage.ts) ----
 
-// A "!" on the toolbar icon while Child mode can't sync because nobody is logged in.
+// "II" on the toolbar icon while tracking is paused, and a "!" until setup is finished.
 async function showBadge() {
-  const [{ mode }, auth] = await Promise.all([store.get("settings"), store.get("auth")]);
-  const warn = mode === "child" && !auth;
-  await chrome.action.setBadgeText({ text: warn ? "!" : "" });
+  const [{ mode }, consent, paused] = await Promise.all([store.get("settings"), store.get("consent"), store.get("pause")]);
+  if (pause.isPaused(paused, Date.now())) {
+    const until = paused.until === null ? "until resumed" : `until ${new Date(paused.until).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}`;
+    await chrome.action.setBadgeText({ text: "II" });
+    await chrome.action.setBadgeBackgroundColor({ color: "#5f6368" });
+    await chrome.action.setTitle({ title: `Bridge.ai: tracking paused ${until}` });
+    return;
+  }
+  const ready = store.hasConsent(consent);
+  await chrome.action.setBadgeText({ text: ready ? "" : "!" });
   await chrome.action.setBadgeBackgroundColor({ color: "#c05621" });
-  await chrome.action.setTitle({ title: warn ? "Bridge.ai: log in to share with the parent dashboard" : `Bridge.ai (${mode} mode)` });
+  await chrome.action.setTitle({ title: ready ? `Bridge.ai (${mode} mode)` : "Bridge.ai: finish setup to turn it on" });
 }
 void showBadge();
-chrome.storage.onChanged.addListener((changes) => { if (changes.auth || changes.settings) void showBadge(); });
+chrome.storage.onChanged.addListener((changes) => { if (changes.consent || changes.settings || changes.pause) void showBadge(); });
+
+// Nothing is recorded before setup is finished (consent), or while paused (pause.ts). Content scripts
+// don't read anything before consent either; this is the second check.
+const paused = async () => {
+  const [consent, p] = await Promise.all([store.get("consent"), store.get("pause")]);
+  return !store.hasConsent(consent) || pause.isPaused(p, Date.now());
+};
 
 // ---- safety gate (core/src/safety.ts) ----
 
@@ -131,6 +155,7 @@ function send(tabId: number | undefined, msg: ToContent) {
 const pairKey = (turn: Turn, tabId?: number) => (tabId !== undefined ? `tab:${tabId}` : `conv:${turn.conversationId}`);
 
 async function onTurn(turn: Turn, tabId?: number) {
+  if (await paused()) return;
   const key = pairKey(turn, tabId);
   if (turn.role === "user") {
     const prev = pending.get(key);
@@ -160,6 +185,7 @@ async function processTurn(user: Turn, bot: Turn | null, tabId: number | undefin
 }
 
 async function recordTurn(user: Turn, labels: TurnLabels, tabId: number | undefined) {
+  if (await paused()) return; // paused while this turn was being labeled
   const site = user.site;
   const profiles = await store.get("profiles");
   profiles[site] = core.updateProfile(profiles[site] ?? core.emptyProfile(site), labels, user.ts);
@@ -183,7 +209,6 @@ async function recordTurn(user: Turn, labels: TurnLabels, tabId: number | undefi
     for (const t of labels.topics) hour[t] = (hour[t] ?? 0) + 1;
     await store.set("hourly", hourly);
   }
-  scheduleSync();
 
   if (LEVELS.indexOf(result.level) > LEVELS.indexOf(previous) && (result.level === "watch" || result.level === "concerning")) {
     await maybeNudge(site, tabId, result.level);
@@ -194,7 +219,7 @@ async function recordTurn(user: Turn, labels: TurnLabels, tabId: number | undefi
 
 async function onHeartbeat(site: Site, ts: number, interacting: boolean, tabId?: number) {
   await closeIdleSessions(ts);
-  if (!interacting) return;
+  if (!interacting || (await paused())) return;
   const [sessions, profiles] = await Promise.all([store.get("sessions"), store.get("profiles")]);
   let profile = profiles[site] ?? core.emptyProfile(site);
   let cur = sessions.current[site];
@@ -232,7 +257,6 @@ async function closeIdleSessions(now: number) {
   await store.set("sessions", sessions);
   await store.set("profiles", profiles);
   await store.set("state", state);
-  scheduleSync();
 }
 
 // ---- nudges ----
@@ -257,90 +281,61 @@ async function maybeNudge(site: Site, tabId: number | undefined, level: Level) {
   send(tabId, { type: "show-nudge", variant });
 }
 
-// ---- sync to the parent dashboard (api/main.py POST /sync), Child mode only ----
-
-// Logging in on the dashboard logs the extension in too (content/dashboard.ts). It trades the
-// dashboard's token for its own, so logging out of one doesn't log out the other.
-async function adoptDashboardSession(token: string, email: string) {
-  const current = await store.get("auth");
-  if (current?.email === email) return;
-  const { apiUrl } = await store.get("settings");
-  try {
-    const res = await fetch(`${apiUrl.replace(/\/+$/, "")}/auth/session`, { method: "POST", headers: { authorization: `Bearer ${token}` } });
-    if (!res.ok) return console.warn(`[Bridge.ai] couldn't pick up the dashboard login: API ${res.status}`);
-    const body = await res.json();
-    await store.set("auth", { token: body.token, email: body.email });
-    console.info(`[Bridge.ai] logged in as ${body.email} from the dashboard`);
-    void syncNow();
-  } catch (e) {
-    console.warn(`[Bridge.ai] couldn't pick up the dashboard login: ${String(e)}`);
-  }
-}
-
-let syncTimer: ReturnType<typeof setTimeout> | undefined;
-let syncing: Promise<void> | undefined;
-
-// Coalesces bursts of turns into one sync a few seconds later. The 1-minute alarm is the backstop.
-function scheduleSync() {
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => void syncNow(), SYNC_DEBOUNCE_MS);
-}
-
-// Sends the current week. Each sync replaces the whole week on the server, so repeats are safe.
-function syncNow(): Promise<void> {
-  syncing ??= doSync().finally(() => (syncing = undefined));
-  return syncing;
-}
-
-async function doSync() {
-  const now = Date.now();
-  let status: NonNullable<store.Store["syncStatus"]>;
-  try {
-    status = await trySync(now);
-  } catch (e) {
-    status = { at: now, ok: false, message: `sync error: ${String(e)}` };
-  }
-  (status.ok ? console.info : console.warn)(`[Bridge.ai] sync: ${status.message}`);
-  await locked(() => store.set("syncStatus", status));
-}
-
-async function trySync(now: number): Promise<NonNullable<store.Store["syncStatus"]>> {
-  const { settings, auth, payload } = await locked(async () => {
-    const [settings, auth, profiles, hourly, nudgeLog, privacyFlags] = await Promise.all([
-      store.get("settings"), store.get("auth"), store.get("profiles"), store.get("hourly"), store.get("nudgeLog"), store.get("privacyFlags"),
-    ]);
-    const payload = buildPayload({
-      childId: settings.childId, deviceId: await store.deviceId(), now, profiles, hourly, nudges: nudgeLog, privacyFlags,
-    });
-    return { settings, auth, payload };
-  });
-  if (settings.mode !== "child") return { at: now, ok: true, message: "Parent mode: nothing is shared" };
-  if (!auth) return { at: now, ok: false, message: "not logged in: log in on the Options page to sync" };
-  if (!payload.sites.length) return { at: now, ok: true, message: "nothing to sync yet this week" };
-  console.info(`[Bridge.ai] sync payload for ${payload.child_id}, week of ${payload.week_start}:`, payload);
-  try {
-    const res = await fetch(`${settings.apiUrl.replace(/\/+$/, "")}/sync`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${auth.token}` },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) return { at: now, ok: true, message: `synced week of ${payload.week_start} (${payload.sites.length} sites) to ${auth.email}` };
-    if (res.status === 401) return { at: now, ok: false, message: "login expired: log in again on the Options page" };
-    return { at: now, ok: false, message: `API ${res.status}: ${(await res.text()).slice(0, 200)}` };
-  } catch (e) {
-    return { at: now, ok: false, message: `API unreachable at ${settings.apiUrl} (${String(e)})` };
-  }
-}
-
 // ---- privacy guard (privacy/guard.ts) ----
 
 const OUTCOME_LOG: Record<PauseOutcome, string> = { held: "held back", hidden: "sent with details hidden", sent: "sent anyway" };
 
 async function onPrivacyPause(site: Site, what: "message" | "file", findings: Finding[], outcome: PauseOutcome) {
-  console.info(`[Bridge.ai] privacy pause on ${site}: ${what} with [${findings}], ${OUTCOME_LOG[outcome]}`);
+  if (await paused()) return;
+  const { mode } = await store.get("settings");
+  // In Child mode, anything sent as typed was approved by a parent with the PIN.
+  const approved = mode === "child" && outcome === "sent";
+  console.info(`[Bridge.ai] privacy pause on ${site}: ${what} with [${findings}], ${approved ? "sent after a parent approved" : OUTCOME_LOG[outcome]}`);
   const now = Date.now();
   const log = pruneDays(await store.get("privacyFlags"), now);
-  (log[dayKey(now)] ??= []).push({ hour: new Date(now).getHours(), site, what, findings, sent: outcome === "sent", hidden: outcome === "hidden" });
+  (log[dayKey(now)] ??= []).push({
+    hour: new Date(now).getHours(), site, what, findings, sent: outcome === "sent", hidden: outcome === "hidden", ...(approved && { approved }),
+  });
   await store.set("privacyFlags", log);
-  scheduleSync();
 }
+
+// ---- parent approval (Child mode): "Ask a parent to send" ----
+
+// The PIN is typed in Bridge.ai's own window (approve.html), never on the chat page, where the site's
+// scripts could read the keys. One request at a time; a new one replaces the old.
+const APPROVAL_TIMEOUT_MS = 3 * 60_000;
+let nextApproval = 1;
+const approvals = new Map<number, {
+  details: { site: Site; what: "message" | "file"; findings: Finding[] };
+  resolve: (ok: boolean) => void;
+  windowId?: number;
+}>();
+
+function answerApproval(id: number, approved: boolean) {
+  const a = approvals.get(id);
+  if (!a) return;
+  approvals.delete(id);
+  a.resolve(approved);
+  if (a.windowId !== undefined) void chrome.windows.remove(a.windowId).catch(() => {});
+}
+
+async function askParent(site: Site, what: "message" | "file", findings: Finding[]): Promise<boolean> {
+  if ((await store.get("settings")).mode !== "child") return false; // only Child mode asks a parent
+  for (const id of [...approvals.keys()]) answerApproval(id, false);
+  const id = nextApproval++;
+  const answer = new Promise<boolean>((resolve) => approvals.set(id, { details: { site, what, findings }, resolve }));
+  try {
+    const win = await chrome.windows.create({ url: `approve.html?id=${id}`, type: "popup", width: 460, height: 440, focused: true });
+    const a = approvals.get(id);
+    if (a) a.windowId = win.id;
+  } catch {
+    answerApproval(id, false);
+  }
+  setTimeout(() => answerApproval(id, false), APPROVAL_TIMEOUT_MS);
+  return answer;
+}
+
+// Closing the window is a "no".
+chrome.windows.onRemoved.addListener((windowId) => {
+  for (const [id, a] of approvals) if (a.windowId === windowId) answerApproval(id, false);
+});

@@ -1,10 +1,13 @@
 // Scores text against the example sentences in labels.ts by meaning. The model itself is passed in as
 // `embed` (model.ts in Node and in the extension's model worker; a fake one in unit tests), so this
 // file has no model, browser or Node dependency.
-import type { ExcludedTopic, Topic } from "../types.js";
+import type { ExcludedTopic, Interest, Topic } from "../types.js";
 import type { SafetyCategory } from "../safety.js";
-import { EXCLUDED_EXAMPLES, FLAG_EXAMPLES, LOOKALIKES, NEUTRAL, SAFETY_EXAMPLES, TOPIC_EXAMPLES, WHEREABOUTS_EXAMPLES, type Flag } from "./labels.js";
-import { MAX_CHARS_PER_TURN, MAX_SENTENCES, NEUTRAL_MARGIN } from "../config.js";
+import {
+  EXCLUDED_EXAMPLES, FLAG_EXAMPLES, INTEREST_EXAMPLES, INTEREST_NEUTRAL, LOOKALIKES, NEUTRAL, SAFETY_EXAMPLES, TOPIC_EXAMPLES,
+  WHEREABOUTS_EXAMPLES, type Flag,
+} from "./labels.js";
+import { INTEREST_GAP, INTEREST_IDLE_MARGIN, MAX_CHARS_PER_TURN, MAX_SENTENCES, NEUTRAL_MARGIN } from "../config.js";
 
 // One unit-length vector per text, in order.
 export type Embed = (texts: string[]) => Promise<Float32Array[]>;
@@ -23,6 +26,8 @@ export interface Scores {
   flags: Record<Flag, number>;
   safety: Record<SafetyCategory, number>;
   whereabouts: number;
+  // Per sentence, only its clear best interest scores (config.ts INTEREST_*); every other one is 0.
+  interests: Record<Interest, number>;
 }
 
 export interface Matcher {
@@ -41,6 +46,7 @@ type Group = keyof typeof GROUPS;
 // Every example once, in a fixed order (several labels share examples, e.g. crisis and self_harm).
 const EXAMPLES = [...new Set([
   ...Object.values(GROUPS).flatMap((g) => Object.values(g).flat()), ...NEUTRAL, ...Object.values(LOOKALIKES).flat(),
+  ...Object.values(INTEREST_EXAMPLES).flat(), ...INTEREST_NEUTRAL,
 ])];
 const index = new Map(EXAMPLES.map((e, i) => [e, i]));
 
@@ -50,7 +56,20 @@ const dot = (a: Float32Array, b: Float32Array) => {
   return s;
 };
 
-const segmenter = new Intl.Segmenter("en", { granularity: "sentence" });
+const INTERESTS = Object.keys(INTEREST_EXAMPLES) as Interest[];
+
+// The average of each interest's example vectors, unit length. Short examples are noisy one by one
+// ("fight" pulls "a fight with my friend" toward martial arts); the average is what they share.
+function centroids(ex: Float32Array[]): Float32Array[] {
+  return INTERESTS.map((k) => {
+    const sum = new Float32Array(ex[0].length);
+    for (const e of INTEREST_EXAMPLES[k]) ex[index.get(e)!].forEach((x, i) => { sum[i] += x; });
+    const len = Math.sqrt(dot(sum, sum));
+    return sum.map((x) => x / len);
+  });
+}
+
+const segmenter =new Intl.Segmenter("en", { granularity: "sentence" });
 
 // The whole message, plus each sentence when there are several, so one line about self-harm inside a
 // long homework question still stands out.
@@ -69,6 +88,7 @@ async function sha256(s: string): Promise<string> {
 // `modelId` keys the cache, so switching models or editing labels.ts never reuses stale vectors.
 export function createMatcher(embed: Embed, opts: { modelId: string; cache?: ExampleCache }): Matcher {
   let examples: Promise<Float32Array[]> | undefined;
+  let interestCentroids: Float32Array[] | undefined;
   const loadExamples = async () => {
     const key = await sha256(JSON.stringify([opts.modelId, EXAMPLES]));
     const cached = await opts.cache?.get(key).catch(() => undefined);
@@ -98,12 +118,25 @@ export function createMatcher(embed: Embed, opts: { modelId: string; cache?: Exa
       };
       const group = <G extends Group>(g: G) =>
         Object.fromEntries(Object.entries(GROUPS[g]).map(([k, list]) => [k, labelScore(k, list)])) as Record<keyof (typeof GROUPS)[G], number>;
+      // Interests: each sentence's clear best, if any. Their own everyday list, since NEUTRAL is made of
+      // homework and hobby requests.
+      interestCentroids ??= centroids(ex);
+      const interests = Object.fromEntries(INTERESTS.map((k) => [k, 0])) as Record<Interest, number>;
+      for (const v of vecs) {
+        const sims = interestCentroids.map((c) => dot(v, c));
+        const order = sims.map((s, k) => k).sort((a, b) => sims[b] - sims[a]);
+        const [best, second] = [sims[order[0]], sims[order[1]]];
+        if (best - second < INTEREST_GAP || best < closest(v, INTEREST_NEUTRAL) + INTEREST_IDLE_MARGIN) continue;
+        const k = INTERESTS[order[0]];
+        interests[k] = Math.max(interests[k], best);
+      }
       return {
         topics: group("topics"),
         excluded: group("excluded"),
         flags: group("flags"),
         safety: group("safety"),
         whereabouts: group("whereabouts").whereabouts,
+        interests,
       };
     },
   };

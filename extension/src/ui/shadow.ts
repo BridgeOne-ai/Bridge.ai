@@ -5,6 +5,25 @@ const CSS = `
   .nudge { position: fixed; right: 16px; bottom: 16px; z-index: 2147483000; max-width: 320px; background: #fff;
     color: #1f2933; border-radius: 12px; padding: 14px 36px 14px 14px; font-size: 14px; line-height: 1.4;
     box-shadow: 0 6px 24px rgba(0,0,0,.18); border-left: 4px solid #3e7cb1; }
+  .status { position: fixed; right: 16px; bottom: 88px; z-index: 2147482999; display: flex; align-items: center; gap: 8px;
+    max-width: 34px; height: 34px; padding: 0 9px; overflow: hidden; border-radius: 17px; cursor: default;
+    background: #fff; color: #1a7f5a; border: 1px solid #d7e5de; box-shadow: 0 2px 10px rgba(0,0,0,.12);
+    font: 12.5px/1.3 system-ui, -apple-system, sans-serif; transition: max-width .25s ease, height .25s ease; }
+  .status.open, .status:hover, .status:focus-visible { max-width: 360px; height: auto; min-height: 34px; padding: 7px 12px 7px 9px; }
+  .status:focus-visible { outline: 2px solid #1a7f5a; outline-offset: 2px; }
+  .status .shield { flex: none; display: grid; place-items: center; }
+  .status .words { display: grid; white-space: nowrap; opacity: 0; transition: opacity .2s; color: #1f2933; }
+  .status.open .words, .status:hover .words, .status:focus-visible .words { opacity: 1; white-space: normal; }
+  .status b { font-weight: 600; }
+  .status .line { color: #52606d; font-size: 12px; }
+  .status.paused { color: #8a5a00; border-color: #eadbb8; }
+  @media (prefers-color-scheme: dark) {
+    .status { background: #1e1f20; border-color: #2f4a3f; color: #5fd3a8; box-shadow: 0 2px 12px rgba(0,0,0,.5); }
+    .status .words { color: #e3e3e3; }
+    .status .line { color: #a8abaf; }
+    .status.paused { color: #fdd663; border-color: #4a4128; }
+  }
+  @media (prefers-reduced-motion: reduce) { .status, .status .words { transition: none; } }
   .close { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 16px; cursor: pointer; color: #52606d; }
   /* Privacy card: follow Gemini's look (Material 3 surfaces, pill buttons) in light and dark. */
   .privacy { --surface: #fff; --text: #1f1f1f; --muted: #5f6368; --line: #e3e3e3; --field: #f0f4f9;

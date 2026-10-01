@@ -5,15 +5,15 @@
     "extension": {
       "entry": [
         "src/background/service-worker.ts",
-        "src/content/{gemini,chatgpt,session-only,dashboard}.ts",
+        "src/content/{gemini,chatgpt,session-only}.ts",
         "src/offscreen/offscreen.ts",
         "src/model/worker.ts",
         "src/popup/popup.ts",
         "src/options/options.ts",
+        "src/approve/approve.ts",
         "src/dashboard/dashboard.ts",
         "build.mjs"
       ]
-    },
-    "dashboard": {}
+    }
   }
 }

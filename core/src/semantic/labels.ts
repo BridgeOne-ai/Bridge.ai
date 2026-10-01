@@ -4,7 +4,7 @@
 //
 // Tuning: add examples for what the model misses and NEUTRAL entries for what it wrongly flags.
 // Check every change with `npm run test:model -w core` (test/model.test.ts runs the real model).
-import type { ExcludedTopic, Topic } from "../types.js";
+import type { ExcludedTopic, Interest, Topic } from "../types.js";
 import type { SafetyCategory } from "../safety.js";
 
 export type Flag = "dependency" | "isolation" | "botHook" | "crisis" | "abuseAtHome";
@@ -232,6 +232,171 @@ export const WHEREABOUTS_EXAMPLES: string[] = [
   "I'm at the mall by myself right now", "I'm in 8th grade at Westview", "my parents are away all weekend so I'm alone",
   "I live in the apartments behind the gas station", "I'm a freshman at Central High School",
   "my school is Jefferson Middle on Oak Avenue",
+];
+
+// What a message is about (types.ts INTEREST_CATEGORY). Scored against INTEREST_NEUTRAL, not NEUTRAL:
+// NEUTRAL is full of homework and hobby requests, which are exactly what interests are.
+export const INTEREST_EXAMPLES: Record<Interest, string[]> = {
+  soccer: [
+    "I scored a goal in my soccer game", "who is better, Messi or Ronaldo", "how do I get better at dribbling a soccer ball",
+    "Real Madrid won the Champions League", "I play striker on my club team", "what's the offside rule",
+  ],
+  basketball: [
+    "I made the basketball team", "how do I improve my jump shot", "LeBron is the greatest of all time",
+    "we lost the basketball game by two points", "who will win the NBA finals", "how do I dunk",
+  ],
+  american_football: [
+    "our football team won the homecoming game", "I play quarterback", "who will win the Super Bowl",
+    "the NFL draft is tonight", "I got tackled hard at football practice", "what's a good fantasy football lineup",
+  ],
+  baseball: [
+    "I hit a home run in my baseball game", "how do I throw a curveball", "the Yankees are playing tonight",
+    "I play shortstop on my softball team", "explain how innings work in baseball",
+  ],
+  cricket: [
+    "India won the cricket match", "how do I bowl leg spin", "who is the best batsman in the IPL",
+    "I scored fifty runs today", "explain LBW in cricket",
+  ],
+  racket_sports: [
+    "I have a tennis match this weekend", "how do I improve my backhand", "who will win Wimbledon",
+    "tips for a faster tennis serve", "I play badminton after school", "I joined the table tennis club",
+  ],
+  swimming: [
+    "I have a swim meet on Saturday", "how can I swim freestyle faster", "I'm training for the 100m butterfly",
+    "tips for breathing while swimming laps", "I made the varsity swim team",
+  ],
+  running: [
+    "I'm training for a 5K", "how do I run a faster mile", "I joined the cross country team",
+    "I have a track meet tomorrow", "what should I eat before a marathon",
+  ],
+  martial_arts: [
+    "I got my black belt in karate", "I train Brazilian jiu jitsu", "taekwondo practice was hard today",
+    "I want to start boxing", "who is the best UFC fighter",
+  ],
+  fitness: [
+    "what's a good workout plan to build muscle", "I go to the gym every day", "how many push-ups should I do a day",
+    "leg day was brutal", "give me a home workout with no equipment", "how much protein do I need after lifting",
+  ],
+  dance: [
+    "I have a dance recital next week", "how do I learn hip hop choreography", "I've been doing ballet for years",
+    "my dance team is competing this weekend", "teach me a TikTok dance",
+  ],
+  math: [
+    "how do I solve this equation", "can you explain derivatives", "I don't understand fractions",
+    "help me with my algebra homework", "what's the Pythagorean theorem", "I have a geometry test tomorrow",
+  ],
+  physics: [
+    "explain Newton's laws of motion", "how does gravity work", "what is the speed of light",
+    "help me with my physics homework on velocity", "how do magnets work",
+  ],
+  chemistry: [
+    "how do I balance chemical equations", "how is the periodic table organized", "explain covalent bonds",
+    "help me with my chemistry lab report", "what happens when you mix an acid and a base",
+  ],
+  biology: [
+    "explain photosynthesis", "how do cells divide", "what does DNA do", "I'm studying the human heart for biology",
+    "how does evolution work", "what's the difference between a virus and bacteria",
+  ],
+  history: [
+    "write an essay about World War 2", "why did the Roman empire fall", "explain the causes of the American Revolution",
+    "I have a history test on the Civil War", "who was Napoleon",
+  ],
+  languages: [
+    "translate this sentence into Spanish", "how do I conjugate French verbs", "I'm learning Japanese",
+    "what's the German word for apple", "help me practice my Spanish vocabulary",
+  ],
+  english_literature: [
+    "help me write an essay on To Kill a Mockingbird", "what is the theme of Romeo and Juliet",
+    "how do I write a good thesis statement", "explain what a metaphor is", "I need to analyze this poem for English class",
+  ],
+  economics_business: [
+    "what is inflation", "explain supply and demand", "how does the stock market work", "how do I start a small business",
+    "what's the difference between a stock and a bond", "how do I make money as a teenager",
+  ],
+  space: [
+    "how big is the universe", "what's inside a black hole", "how do rockets get to Mars", "I want to be an astronaut",
+    "why does the moon have phases",
+  ],
+  coding: [
+    "how do I fix this bug in my code", "teach me Python", "how do I make a website with HTML",
+    "what's the difference between Java and JavaScript", "I'm building an app", "explain recursion",
+  ],
+  tech_ai: [
+    "how does AI work", "what is a neural network", "which phone should I buy", "how do robots work",
+    "help me pick parts for a gaming PC", "what's new in the latest iPhone",
+  ],
+  movies_tv: [
+    "recommend a good movie", "what should I watch on Netflix tonight", "did you see the new Marvel movie",
+    "who is your favorite character in Stranger Things", "explain the ending of Inception", "I'm dying to see that movie",
+  ],
+  anime: [
+    "what anime should I watch next", "I just finished watching Naruto", "who is the strongest in One Piece",
+    "recommend some good manga", "is Attack on Titan worth watching",
+  ],
+  music: [
+    "I love this song", "Taylor Swift's new album is amazing", "recommend me some rap songs", "I'm going to a concert",
+    "what's a good playlist for studying", "who's your favorite band",
+  ],
+  video_games: [
+    "how do I beat this boss in Elden Ring", "what's the best Minecraft build", "I got a victory royale in Fortnite",
+    "recommend a good video game", "I play Roblox with my friends every night", "this game is killing me lol",
+  ],
+  books: [
+    "recommend a book", "I just finished reading Harry Potter", "what should I read next", "I love fantasy novels",
+    "who's your favorite author",
+  ],
+  social_media: [
+    "how do I get more followers on TikTok", "I've been watching MrBeast videos", "should I start a YouTube channel",
+    "my Instagram post went viral", "who's the best Twitch streamer",
+  ],
+  drawing_art: [
+    "how do I draw realistic faces", "I painted a landscape today", "give me drawing ideas",
+    "what are good apps for digital art", "I'm learning to sketch anime characters",
+  ],
+  music_making: [
+    "how do I play guitar chords", "I'm learning piano", "help me write lyrics for my song", "I sing in the school choir",
+    "how do I make beats",
+  ],
+  creative_writing: [
+    "I'm writing a fantasy novel", "give me ideas for my short story", "how do I make my characters more interesting",
+    "help me write a poem about the ocean", "I write fan fiction",
+  ],
+  photo_video: [
+    "how do I edit videos for YouTube", "tips for taking better photos", "what camera should I get",
+    "I'm making a short film", "how do I shoot photos at night",
+  ],
+  cooking: [
+    "what should I cook for dinner", "how do I bake chocolate chip cookies", "give me a recipe for pasta",
+    "I love trying new foods", "how long do I boil an egg", "I love pizza",
+  ],
+  fashion_beauty: [
+    "what should I wear to the party", "what's a good skincare routine", "how do I do winged eyeliner",
+    "are baggy jeans in style", "help me pick an outfit", "what hairstyle would suit me",
+  ],
+  travel: [
+    "what should I do in Paris", "plan a trip to Japan", "what are the best beaches in Florida",
+    "I'm going on vacation next week", "what should I pack for a camping trip",
+  ],
+  animals: [
+    "what's a good name for my dog", "how do I take care of a hamster", "what do cats like to eat", "I love horses",
+    "what's the biggest shark",
+  ],
+  cars: [
+    "what's the fastest car in the world", "I want to learn to drive", "how does a car engine work",
+    "what should my first car be", "that Formula 1 race was crazy",
+  ],
+};
+
+// Messages that aren't about a hobby or subject: chat about the chat itself, and everyday life with
+// friends, family and crushes (TOPIC_EXAMPLES covers those). A sentence closer to these than to its best
+// interest gets no interest. No plain feelings here: "nervous about my basketball game" is still basketball.
+export const INTEREST_NEUTRAL: string[] = [
+  "hi", "hello", "thanks", "thank you so much", "ok", "yes", "no", "good morning", "how are you", "what's up", "lol",
+  "sorry", "tell me a joke", "what time is it", "what's the weather today", "summarize this", "make it shorter",
+  "can you say that again", "write it more formally", "what does this mean", "never mind", "who are you",
+  "what do you think I should do", "I'm not sure what to do", "any advice?",
+  "my friend and I got into an argument", "my parents are mad at me", "I like a boy in my class", "my sister is so annoying",
+  "we broke up last week", "nobody texted me back",
 ];
 
 // Hard negatives for one label: sayings that sound like it but mean something milder. A sentence closer

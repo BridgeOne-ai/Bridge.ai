@@ -12,13 +12,16 @@ Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.
 // The safety gate's answer (normally the service worker's verdict from the on-device model), controlled per test.
 let verdict = { block: false, warn: false, categories: [] as string[], whereabouts: false };
 let child = true;
+let approve = false;
+let asked: [string, string[]][] = [];
 let fail = false;
 let delayMs = 0;
 const checked: string[] = [];
 const reports: [string, string[], string][] = [];
 const root = mountShadow();
 startPrivacyGuard({
-  root, selectors: SELECTORS, isStrict: async () => false, isChild: async () => child, report: (...a) => reports.push(a),
+  root, selectors: SELECTORS, isChild: async () => child, report: (...a) => reports.push(a),
+  askParent: async (what, findings) => { asked.push([what, findings]); return approve; },
   checkSafety: async (text) => { checked.push(text); await tick(delayMs); if (fail) throw new Error("Extension context invalidated."); return verdict; },
 });
 
@@ -44,7 +47,7 @@ const button = (label: string) => [...(card()?.querySelectorAll("button") ?? [])
 beforeEach(() => {
   sends = 0; delayMs = 0; fail = false; checked.length = 0; reports.length = 0; card()?.remove();
   verdict = { block: false, warn: false, categories: [], whereabouts: false };
-  child = true;
+  child = true; approve = false; asked = [];
 });
 
 describe("safety gate", () => {
@@ -133,13 +136,14 @@ describe("safety gate", () => {
     expect(card()!.textContent).toContain("A chatbot can't be a real boyfriend or girlfriend");
   });
 
-  it("'Send anyway' on personal info still goes through the gate", async () => {
+  it("a parent-approved personal-info message still goes through the gate", async () => {
     verdict = { block: true, warn: false, categories: ["stranger_danger"], whereabouts: false };
+    approve = true;
     const { editor } = page();
     type(editor, "meet me at the mall, my email is sam@example.com, don't tell my parents");
     enter(editor);
     await tick();
-    button("Send anyway")!.click(); // the privacy pause for the email
+    button("Ask a parent to send")!.click(); // the privacy pause for the email
     await tick();
     expect(sends).toBe(0);
     expect(card()!.textContent).toContain("This message wasn't sent");
@@ -161,19 +165,38 @@ describe("safety gate", () => {
     expect(sends).toBe(1);
   });
 
-  it("pauses a message that says where they live or that they're alone, and 'Send anyway' sends it", async () => {
+  it("Child mode: a message saying where they are waits for a parent, and sends once one approves", async () => {
     verdict = { block: false, warn: false, categories: [], whereabouts: true };
+    approve = true;
     const { editor } = page();
     type(editor, "I'm home alone until 9");
     enter(editor);
     await tick();
     expect(sends).toBe(0);
     expect(card()!.textContent).toContain("where you live or go to school, or that you're alone");
-    expect(card()!.textContent).toContain("Your parent only sees that it was paused");
-    button("Send anyway")!.click();
+    expect(card()!.textContent).toContain("A parent can see that something was paused, never your words");
+    expect(button("Send anyway")).toBeUndefined();
+    button("Ask a parent to send")!.click();
     await tick();
+    expect(asked).toEqual([["message", ["whereabouts"]]]);
     expect(sends).toBe(1);
     expect(reports).toEqual([["message", ["whereabouts"], "sent"]]);
+  });
+
+  it("Child mode: a parent who says no keeps the message unsent, and the child can ask again", async () => {
+    verdict = { block: false, warn: false, categories: [], whereabouts: true };
+    const { editor } = page();
+    type(editor, "I'm home alone until 9");
+    enter(editor);
+    await tick();
+    button("Ask a parent to send")!.click();
+    await tick();
+    expect(sends).toBe(0);
+    expect(button("Not approved. Ask again")).toBeDefined();
+    expect(reports).toEqual([]); // still deciding
+    button("Edit my message")!.click();
+    await tick();
+    expect(reports).toEqual([["message", ["whereabouts"], "held"]]);
   });
 
   it("in Parent mode the pause says nothing is shared, and editing keeps the message", async () => {
@@ -200,7 +223,29 @@ describe("safety gate", () => {
     expect(sends).toBe(0);
     expect(card()!.textContent).toContain("A chatbot isn't a real friend");
     expect(button("Send anyway")).toBeUndefined();
+    button("Edit my message")!.click();
+    await tick();
     expect(reports).toEqual([["message", ["ai_relationship"], "held"]]);
+  });
+
+  it("Child mode: a parent can approve a friend-or-partner message; dangerous ones can't be approved", async () => {
+    verdict = { block: true, warn: false, categories: ["ai_romance"], whereabouts: false };
+    approve = true;
+    const { editor } = page();
+    type(editor, "will you be my girlfriend?");
+    enter(editor);
+    await tick();
+    button("Ask a parent to send")!.click();
+    await tick();
+    expect(sends).toBe(1);
+    expect(reports).toEqual([["message", ["ai_relationship"], "sent"]]);
+
+    verdict = { block: true, warn: false, categories: ["self_harm"], whereabouts: false };
+    type(editor, "i want to disappear forever");
+    enter(editor);
+    await tick();
+    expect(button("Ask a parent to send")).toBeUndefined();
+    expect(sends).toBe(1);
   });
 
   it("a block that mixes a relationship with a danger is recorded only as 'unsafe'", async () => {

@@ -1,8 +1,8 @@
-// Options: Parent/Child mode and the parent PIN, the account Child mode syncs to, and settings.
-// In Child mode with a PIN set, everything below the mode section needs the PIN first.
-import type { ToWorker } from "../messages";
+// Options: setup and consent (nothing is read on any site before it), Parent/Child mode and the parent
+// PIN, and settings. In Child mode with a PIN set, everything below the mode section needs the PIN first.
 import * as store from "../storage";
 import * as mode from "../mode";
+import * as pause from "../pause";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const input = (id: string) => $<HTMLInputElement>(id);
@@ -10,11 +10,17 @@ const input = (id: string) => $<HTMLInputElement>(id);
 let unlocked = false; // this page only; closing it locks again
 
 async function render() {
-  const [settings, lock] = await Promise.all([store.get("settings"), store.get("lock")]);
+  const [settings, lock, consent] = await Promise.all([store.get("settings"), store.get("lock"), store.get("consent")]);
+  const ready = store.hasConsent(consent);
+  $("setup").hidden = ready;
+  $("main").hidden = !ready;
+  await showModel();
+  if (!ready) return renderSetup(!!lock);
+
   const child = settings.mode === "child";
   $("mode-now").innerHTML = child ? "<b>Child mode</b> is on." : "<b>Parent mode</b> is on.";
   $("mode-about").textContent = child
-    ? "Messages that look dangerous are held back before the chatbot gets them, personal info is paused, and the week's topics (never words) are shared with the parent dashboard."
+    ? "Messages that look risky are held back before the chatbot gets them, and a parent can approve some with the PIN. Nothing the child writes leaves this computer; a parent sees only what was held back."
     : "Bridge.ai tracks your own feelings in AI chats, on this computer only. Nothing is shared and no message is blocked.";
   $("no-pin").hidden = !child || !!lock;
   $("to-parent").hidden = !child;
@@ -23,17 +29,7 @@ async function render() {
   const gated = child && !!lock && !unlocked;
   $("locked").hidden = !gated;
   $("unlocked").hidden = gated;
-  $("account").hidden = !child;
-  for (const e of document.querySelectorAll<HTMLElement>(".child-only")) e.hidden = !child;
-
   input("nudges").checked = settings.nudgesEnabled;
-  input("strict").checked = settings.privacyStrict;
-  input("api").value = settings.apiUrl;
-  input("child").value = settings.childId;
-  $("device").textContent = await store.deviceId();
-  await showAuth();
-  await showSyncStatus();
-  await showModel();
 }
 
 // Updated on its own, so download progress doesn't reset fields someone is editing.
@@ -45,6 +41,39 @@ async function showModel() {
     ? `Downloading the model once (about 200 MB): ${model.progress}%. Until then, only the built-in phrase checks run.`
     : `Couldn't load the model (${model.message}), so only the built-in phrase checks run. It tries again on the next message.`;
 }
+
+// ---- setup and consent ----
+
+let hasLock = false;
+const chosen = () => document.querySelector<HTMLInputElement>('input[name="who"]:checked')?.value as store.Mode | undefined;
+
+function renderSetup(lock: boolean) {
+  hasLock = lock;
+  const who = chosen();
+  // A PIN that already exists (Child mode was set up before) is asked for; otherwise Child mode makes one.
+  $("setup-old-pin").hidden = !who || !lock;
+  $("setup-new-pin").hidden = who !== "child" || lock;
+  $<HTMLButtonElement>("start").disabled = !who || !input("agree").checked;
+}
+for (const el of document.querySelectorAll('input[name="who"], #agree')) el.addEventListener("change", () => renderSetup(hasLock));
+
+$("start").addEventListener("click", async () => {
+  const who = chosen();
+  if (!who || !input("agree").checked) return;
+  $("setup-error").textContent = "";
+  if (hasLock) {
+    const ok = await mode.unlock(input("setup-pin-old").value);
+    input("setup-pin-old").value = "";
+    if (!ok.ok) { $("setup-error").textContent = ok.message; return; }
+  } else if (who === "child") {
+    const made = await mode.setPin(input("setup-pin-1").value, input("setup-pin-2").value);
+    if (!made.ok) { $("setup-error").textContent = made.message; return; }
+  }
+  unlocked = true;
+  await mode.switchTo(who);
+  await store.set("consent", { at: Date.now(), version: store.CONSENT_VERSION, mode: who });
+  await render();
+});
 
 // ---- mode and PIN (mode.ts) ----
 
@@ -101,79 +130,27 @@ $("unlock").addEventListener("submit", async (e) => {
   if (result.ok) { unlocked = true; await render(); }
 });
 
-// ---- account (api/auth.py). Logs in with the settings' API URL, so save a changed URL first. ----
-
-async function showAuth() {
-  const auth = await store.get("auth");
-  $("logged-out").hidden = !!auth;
-  $("logged-in").hidden = !auth;
-  $("who").textContent = auth?.email ?? "";
-}
-
-async function authRequest(path: "login" | "signup") {
-  const { apiUrl } = await store.get("settings");
-  $("auth-out").textContent = "…";
-  try {
-    const res = await fetch(`${apiUrl.replace(/\/+$/, "")}/auth/${path}`, {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: input("email").value.trim(), password: input("password").value }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      $("auth-out").textContent = typeof body.detail === "string" ? body.detail : "Enter a valid email and a password of at least 8 characters";
-      return;
-    }
-    await store.set("auth", { token: body.token, email: body.email });
-    input("password").value = "";
-    $("auth-out").textContent = "";
-    await showAuth();
-    const msg: ToWorker = { type: "sync-now" };
-    void chrome.runtime.sendMessage(msg).catch(() => {});
-  } catch (e) {
-    $("auth-out").textContent = `API unreachable at ${apiUrl} (${String(e)})`;
-  }
-}
-
-$("login").addEventListener("click", () => void authRequest("login"));
-$("signup").addEventListener("click", () => void authRequest("signup"));
-$("logout").addEventListener("click", async () => {
-  const [{ apiUrl }, auth] = await Promise.all([store.get("settings"), store.get("auth")]);
-  if (auth) {
-    await fetch(`${apiUrl.replace(/\/+$/, "")}/auth/logout`, { method: "POST", headers: { authorization: `Bearer ${auth.token}` } }).catch(() => {});
-  }
-  await store.set("auth", null);
-  await showAuth();
-});
-
-async function showSyncStatus() {
-  const st = await store.get("syncStatus");
-  $("sync-out").textContent = st ? `${st.ok ? "OK" : "Failed"}, ${new Date(st.at).toLocaleTimeString()}: ${st.message}` : "not synced yet";
-}
-$("sync").addEventListener("click", () => {
-  $("sync-out").textContent = "…";
-  const msg: ToWorker = { type: "sync-now" };
-  void chrome.runtime.sendMessage(msg).catch(() => {});
-});
-
 // ---- settings ----
 
 $("save").addEventListener("click", async () => {
   const current = await store.get("settings");
-  const d = store.DEFAULTS.settings;
-  await store.set("settings", {
-    mode: current.mode,
-    nudgesEnabled: input("nudges").checked,
-    privacyStrict: input("strict").checked,
-    apiUrl: input("api").value.trim() || d.apiUrl,
-    childId: input("child").value.trim() || d.childId,
-  });
+  await store.set("settings", { ...current, nudgesEnabled: input("nudges").checked });
   $("saved").textContent = "Saved";
   setTimeout(() => ($("saved").textContent = ""), 1500);
 });
 
+// Withdraws consent: every chat tab stops (content scripts check it), and the kept data is deleted.
+// In Child mode this section is only reachable with the PIN.
+$("turn-off").addEventListener("click", async () => {
+  if (!confirm("Turn Bridge.ai off and delete what it kept on this computer?")) return;
+  await pause.resume();
+  await store.resetData();
+  await store.set("consent", null);
+  await render();
+});
+
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.syncStatus) void showSyncStatus();
   if (changes.modelStatus) void showModel();
-  if (changes.settings || changes.lock || changes.auth) void render();
+  if (changes.settings || changes.lock || changes.consent) void render();
 });
 void render();

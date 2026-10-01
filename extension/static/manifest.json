@@ -1,24 +1,53 @@
 {
   "manifest_version": 3,
   "name": "Bridge.ai",
-  "version": "0.2.0",
-  "description": "Tracks how you feel in AI chats, on your own computer. Parent mode for yourself, Child mode to protect a child.",
-  "background": { "service_worker": "background.js", "type": "module" },
+  "version": "0.3.0",
+  "description": "Notices how you feel in AI chats and protects personal info, on your own computer. Parent mode for yourself, Child mode to protect a child.",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "content_scripts": [
-    { "matches": ["https://gemini.google.com/*"], "js": ["content-gemini.js"], "run_at": "document_idle" },
-    { "matches": ["https://chatgpt.com/*"], "js": ["content-chatgpt.js"], "run_at": "document_idle" },
     {
-      "matches": ["https://claude.ai/*", "https://character.ai/*"],
-      "js": ["content-session.js"],
+      "matches": [
+        "https://gemini.google.com/*"
+      ],
+      "js": [
+        "content-gemini.js"
+      ],
       "run_at": "document_idle"
     },
-    { "matches": ["http://localhost/*", "http://127.0.0.1/*"], "js": ["content-dashboard.js"], "run_at": "document_idle" }
+    {
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "content-chatgpt.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://claude.ai/*",
+        "https://character.ai/*"
+      ],
+      "js": [
+        "content-session.js"
+      ],
+      "run_at": "document_idle"
+    }
   ],
-  "permissions": ["storage", "alarms", "offscreen"],
-  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
+  "permissions": [
+    "storage",
+    "alarms",
+    "offscreen"
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
-  "action": { "default_popup": "popup.html", "default_title": "Bridge.ai" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Bridge.ai"
+  },
   "options_page": "options.html"
 }
