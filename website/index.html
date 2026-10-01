@@ -3,127 +3,430 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
   <title>Bridge.ai: feel better about how you use AI chatbots</title>
   <meta name="description" content="A Chrome extension that notices how you feel in AI chats and protects personal information, using a model that runs on your own computer. Nothing you write leaves it." />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Download buttons (data-install) get the zip built into the site (.github/workflows/pages.yml) and open the install guide (install.js). -->
+  <!-- Download buttons (data-install) get the zip built into the site (.github/workflows/pages.yml) and open
+       the install guide (install.js). Every illustration is inline SVG: nothing loads from elsewhere. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="lift" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1b1d3a" flood-opacity=".10"/></filter>
+      <filter id="lift-sm" x="-20%" y="-30%" width="140%" height="180%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#1b1d3a" flood-opacity=".10"/></filter>
+      <linearGradient id="g-accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5046e5"/><stop offset="1" stop-color="#8a5cf6"/></linearGradient>
+      <linearGradient id="g-mint" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dc596"/><stop offset="1" stop-color="#12a37a"/></linearGradient>
+    </defs>
+  </svg>
+
   <header>
     <div class="wrap">
-      <a class="brand" href="#top">Bridge.ai</a>
+      <a class="brand" href="#top">
+        <svg class="mark" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="10" fill="url(#g-accent)"/><path d="M7 20c3-8.5 7-8.5 10 0s7 8.5 10 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+        Bridge.ai
+      </a>
       <nav aria-label="Sections">
-        <a href="#what">What it does</a>
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
         <a href="#modes">Modes</a>
         <a href="#privacy">Privacy</a>
         <a href="#install">Install</a>
-        <a href="#faq">FAQ</a>
       </nav>
       <a class="btn" href="download/bridge-ai-extension.zip" data-install>Download</a>
     </div>
   </header>
 
-  <main id="top" class="wrap">
+  <main id="top">
+    <!-- hero -->
     <div class="hero">
-      <h1>Feel better about how you use AI chatbots.</h1>
-      <p>Bridge.ai is a Chrome extension that notices how you feel when you talk to ChatGPT and Gemini, catches personal information before you send it, and protects children from risky conversations. It runs on your own computer, so nothing you write ever leaves it.</p>
-      <div class="actions">
-        <a class="btn big" href="download/bridge-ai-extension.zip" data-install>Download for Chrome</a>
-        <a href="https://www.youtube.com/watch?v=xlw9YbbXYfk">Watch the demo</a>
+      <div class="wrap">
+        <div>
+          <span class="badge"><i></i>Runs on your computer · No account · Free</span>
+          <h1>Feel better about how you use <em>AI chatbots</em>.</h1>
+          <p class="lead">Bridge.ai is a Chrome extension that notices how you feel when you talk to ChatGPT and Gemini, catches personal information before you send it, and protects children from risky conversations. Nothing you write ever leaves your computer.</p>
+          <div class="actions">
+            <a class="btn big" href="download/bridge-ai-extension.zip" data-install>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+              Download for Chrome
+            </a>
+            <a class="link" href="https://www.youtube.com/watch?v=xlw9YbbXYfk">
+              <span class="play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg></span>
+              Watch the demo
+            </a>
+          </div>
+          <p class="fine">Free and open source · Chrome on a computer · Takes about 2 minutes</p>
+        </div>
+
+        <svg class="hero-art" viewBox="0 0 560 500" role="img" aria-label="Illustration: a chat where Bridge.ai pauses a message containing a phone number, with feeling tags and a 'Protected by Bridge.ai' badge" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+          <circle cx="470" cy="96" r="86" fill="#fdebf4"/>
+          <circle cx="78" cy="420" r="74" fill="#e5f7ef"/>
+          <circle cx="520" cy="380" r="40" fill="#e8f2ff"/>
+          <!-- browser window -->
+          <g filter="url(#lift)">
+            <rect x="40" y="56" width="460" height="372" rx="24" fill="#fff"/>
+          </g>
+          <path d="M40 80a24 24 0 0 1 24-24h412a24 24 0 0 1 24 24v22H40z" fill="#f5f6fb"/>
+          <circle cx="66" cy="79" r="6" fill="#ff8f8f"/><circle cx="86" cy="79" r="6" fill="#ffcb6b"/><circle cx="106" cy="79" r="6" fill="#6fd7a2"/>
+          <rect x="136" y="68" width="200" height="22" rx="11" fill="#fff" stroke="#e8eaf2"/>
+          <text x="152" y="83.5" font-size="12" fill="#9097a8">Your AI chat</text>
+          <!-- chat -->
+          <rect x="66" y="126" width="236" height="46" rx="18" fill="#f2f3f8"/>
+          <text x="86" y="154" font-size="14.5" fill="#3a3f52">Sure! What's the plan?</text>
+          <rect x="196" y="186" width="280" height="46" rx="18" fill="url(#g-accent)"/>
+          <text x="216" y="214" font-size="14.5" fill="#fff">Text me at 352-555-0142 later</text>
+          <!-- privacy card -->
+          <g filter="url(#lift-sm)">
+            <rect x="66" y="252" width="410" height="146" rx="20" fill="#fff" stroke="#eceef5"/>
+          </g>
+          <circle cx="94" cy="282" r="13" fill="#fff0e6"/>
+          <text x="94" y="287.5" font-size="15" font-weight="800" fill="#ee7f45" text-anchor="middle">!</text>
+          <text x="116" y="288" font-size="16" font-weight="700" fill="#151826">This looks personal</text>
+          <text x="84" y="322" font-size="14" fill="#5d6478">Text me at</text>
+          <rect x="156" y="306" width="168" height="24" rx="7" fill="#eef0ff"/>
+          <text x="166" y="322.5" font-size="13" fill="#4038c9">phone number removed</text>
+          <text x="332" y="322" font-size="14" fill="#5d6478">later</text>
+          <rect x="84" y="344" width="214" height="36" rx="18" fill="#5046e5"/>
+          <text x="191" y="367" font-size="13.5" font-weight="650" fill="#fff" text-anchor="middle">Send without these details</text>
+          <text x="318" y="367" font-size="13.5" font-weight="600" fill="#5d6478">Ask a parent</text>
+          <!-- floating feeling and interest tags -->
+          <g class="float" filter="url(#lift-sm)">
+            <rect x="380" y="18" width="134" height="40" rx="20" fill="#fff"/>
+            <circle cx="402" cy="38" r="7" fill="#12a37a"/>
+            <text x="416" y="43" font-size="14" font-weight="650" fill="#151826">Feeling calm</text>
+          </g>
+          <g class="float two" filter="url(#lift-sm)">
+            <rect x="4" y="196" width="112" height="40" rx="20" fill="#fff"/>
+            <circle cx="26" cy="216" r="7" fill="#ee7f45"/>
+            <text x="40" y="221" font-size="14" font-weight="650" fill="#151826">A bit stressed</text>
+          </g>
+          <g class="float three" filter="url(#lift-sm)">
+            <rect x="420" y="128" width="132" height="40" rx="20" fill="#fff"/>
+            <circle cx="442" cy="148" r="7" fill="#3b82f6"/>
+            <text x="456" y="153" font-size="14" font-weight="650" fill="#151826">Into basketball</text>
+          </g>
+          <!-- protected badge -->
+          <g class="float two" filter="url(#lift)">
+            <rect x="268" y="420" width="272" height="64" rx="20" fill="#fff"/>
+            <rect x="284" y="434" width="36" height="36" rx="11" fill="#e5f7ef"/>
+            <path d="M302 441l9 3.6v6.2c0 5.6-3.8 10.6-9 12.4-5.2-1.8-9-6.8-9-12.4v-6.2z" fill="none" stroke="#12a37a" stroke-width="2.2" stroke-linejoin="round"/>
+            <path d="M297.8 452.4l3 3 5.6-5.8" fill="none" stroke="#12a37a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="332" y="450" font-size="14.5" font-weight="700" fill="#151826">Protected by Bridge.ai</text>
+            <text x="332" y="469" font-size="12.5" fill="#5d6478">Nothing leaves this computer</text>
+          </g>
+        </svg>
       </div>
-      <p class="muted" style="font-size:15px;margin-top:16px">Free and open source. Chrome on a computer. No account needed.</p>
     </div>
 
-    <section id="what">
-      <h2>What it does</h2>
-      <p class="muted">Each message is read by a small AI model that runs inside Chrome. It downloads once and then works offline.</p>
-      <div class="features">
-        <div><h3>Feelings and interests</h3><p>Notices 27 feelings, like stress, loneliness or pride, and what you chat about: sports, studies, games, music and more.</p></div>
-        <div><h3>Personal info guard</h3><p>Catches phone numbers, emails, addresses and passwords before you send them, with one click to remove them.</p></div>
-        <div><h3>Patterns over a week</h3><p>Notices slow changes, like relying on a chatbot in place of people.</p></div>
-        <div><h3>Gentle nudges</h3><p>A short reminder when chatbot use starts to look unhealthy. At most three a day.</p></div>
-        <div><h3>A private dashboard</h3><p>Your week at a glance: feelings, interests and time per chatbot.</p></div>
-        <div><h3>Always visible</h3><p>A small "Bridge.ai" notice shows on every chat it covers. You can pause it any time.</p></div>
+    <!-- how it works -->
+    <section id="how">
+      <div class="wrap">
+        <div class="head">
+          <span class="eyebrow">How it works</span>
+          <h2>A small AI that stays on your computer</h2>
+          <p>Bridge.ai reads each message with a model that runs inside Chrome. Your words are checked right there, and never sent to a server.</p>
+        </div>
+        <svg class="flow" viewBox="0 0 980 250" role="img" aria-label="Diagram: your message goes to the AI model on your computer, which finds feelings, interests and personal info. Nothing goes to a server." font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+          <!-- crossed-out cloud -->
+          <g opacity=".95">
+            <path d="M452 46c0-14 11-24 24-24 9 0 17 5 21 12 2-1 5-1 7-1 11 0 19 8 19 18 0 1 0 2-.2 3H452z" fill="#f7f8fc" stroke="#d9dce8" stroke-width="2"/>
+            <text x="490" y="78" font-size="13" font-weight="650" fill="#9097a8" text-anchor="middle">No server</text>
+            <line x1="458" y1="18" x2="522" y2="60" stroke="#db4f93" stroke-width="3" stroke-linecap="round"/>
+            <path d="M490 96v20" stroke="#d9dce8" stroke-width="2" stroke-dasharray="4 5"/>
+          </g>
+          <!-- 1 message -->
+          <g filter="url(#lift-sm)">
+            <rect x="20" y="120" width="230" height="104" rx="22" fill="#fff" stroke="#eceef5"/>
+          </g>
+          <rect x="42" y="142" width="150" height="26" rx="13" fill="#f2f3f8"/>
+          <rect x="40" y="176" width="196" height="30" rx="15" fill="url(#g-accent)"/>
+          <text x="138" y="196" font-size="13" fill="#fff" text-anchor="middle">Stressed about my math test</text>
+          <rect x="54" y="152" width="100" height="6" rx="3" fill="#d6d9e4"/>
+          <!-- arrow -->
+          <path d="M268 172h84" stroke="#c9cce0" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 8"/>
+          <path d="M346 162l12 10-12 10" fill="none" stroke="#c9cce0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- 2 laptop with the model -->
+          <rect x="384" y="122" width="212" height="122" rx="14" fill="#fff" stroke="#e1e4ef" stroke-width="2"/>
+          <rect x="398" y="136" width="184" height="94" rx="8" fill="#f3f2ff"/>
+          <rect x="360" y="242" width="260" height="10" rx="5" fill="#e1e4ef"/>
+          <g transform="translate(490 183)">
+            <circle r="30" fill="url(#g-accent)"/>
+            <circle r="30" fill="none" stroke="#c9c4ff" stroke-width="2" transform="scale(1.35)" opacity=".7"/>
+            <path d="M-10-4h20M-10 4h20M-4-10v20M4-10v20" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+            <rect x="-13" y="-13" width="26" height="26" rx="6" fill="none" stroke="#fff" stroke-width="2.4"/>
+          </g>
+          <!-- arrow -->
+          <path d="M628 172h84" stroke="#c9cce0" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 8"/>
+          <path d="M706 162l12 10-12 10" fill="none" stroke="#c9cce0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- 3 results -->
+          <g filter="url(#lift-sm)">
+            <rect x="740" y="104" width="220" height="40" rx="20" fill="#fff"/>
+            <circle cx="762" cy="124" r="7" fill="#ee7f45"/>
+            <text x="777" y="129" font-size="14" font-weight="650" fill="#151826">Feeling: stress</text>
+          </g>
+          <g filter="url(#lift-sm)">
+            <rect x="740" y="154" width="220" height="40" rx="20" fill="#fff"/>
+            <circle cx="762" cy="174" r="7" fill="#3b82f6"/>
+            <text x="777" y="179" font-size="14" font-weight="650" fill="#151826">Interest: math</text>
+          </g>
+          <g filter="url(#lift-sm)">
+            <rect x="740" y="204" width="220" height="40" rx="20" fill="#fff"/>
+            <circle cx="762" cy="224" r="7" fill="#12a37a"/>
+            <text x="777" y="229" font-size="14" font-weight="650" fill="#151826">Personal info: none</text>
+          </g>
+        </svg>
+        <div class="flow-caption">
+          <p><b>You type a message</b>on ChatGPT or Gemini, like always.</p>
+          <p><b>Bridge.ai checks it on your computer</b>using a small AI model that runs inside Chrome.</p>
+          <p><b>You get gentle insight</b>feelings, interests, and a pause if something looks personal.</p>
+        </div>
       </div>
     </section>
 
+    <!-- features -->
+    <section class="tint" id="features">
+      <div class="wrap">
+        <div class="head">
+          <span class="eyebrow">Features</span>
+          <h2>Everything it does for you</h2>
+          <p>Thoughtful help in the background, never in the way.</p>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <svg class="ill" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="20" fill="#fdebf4"/><circle cx="30" cy="34" r="13" fill="none" stroke="#db4f93" stroke-width="2.6"/><circle cx="25.5" cy="31" r="1.8" fill="#db4f93"/><circle cx="34.5" cy="31" r="1.8" fill="#db4f93"/><path d="M25 37.5s2 3 5 3 5-3 5-3" fill="none" stroke="#db4f93" stroke-width="2.6" stroke-linecap="round"/><path d="M44 15.5c1.4-2.6 5.6-2.2 5.6 1 0 2.8-3.6 5-5.6 6.4-2-1.4-5.6-3.6-5.6-6.4 0-3.2 4.2-3.6 5.6-1z" fill="#db4f93"/></svg>
+            <h3>Feelings and interests</h3>
+            <p>Notices 27 feelings, from stress and loneliness to pride and calm, and what you love chatting about.</p>
+          </div>
+          <div class="card">
+            <svg class="ill" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="20" fill="#e5f7ef"/><path d="M32 14l14 5.5v9.5c0 9-6 16.8-14 19.6-8-2.8-14-10.6-14-19.6v-9.5z" fill="#fff" stroke="#12a37a" stroke-width="2.6" stroke-linejoin="round"/><rect x="26" y="30" width="12" height="9" rx="2" fill="#12a37a"/><path d="M28.5 30v-3a3.5 3.5 0 0 1 7 0v3" fill="none" stroke="#12a37a" stroke-width="2.4"/></svg>
+            <h3>Personal info guard</h3>
+            <p>Catches phone numbers, emails, addresses and passwords before you send them, with one click to remove them.</p>
+          </div>
+          <div class="card">
+            <svg class="ill" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="20" fill="#e8f2ff"/><path d="M15 44l9-10 8 6 9-13 8 5" fill="none" stroke="#3b82f6" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="34" r="3" fill="#fff" stroke="#3b82f6" stroke-width="2.2"/><circle cx="32" cy="40" r="3" fill="#fff" stroke="#3b82f6" stroke-width="2.2"/><circle cx="41" cy="27" r="3" fill="#fff" stroke="#3b82f6" stroke-width="2.2"/><path d="M15 49h34" stroke="#bcd6fb" stroke-width="2.4" stroke-linecap="round"/></svg>
+            <h3>Patterns over a week</h3>
+            <p>Spots slow changes, like leaning on a chatbot in place of friends, even when no single message stands out.</p>
+          </div>
+          <div class="card">
+            <svg class="ill" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="20" fill="#fff0e6"/><path d="M16 22a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v13a6 6 0 0 1-6 6H29l-8 6v-6h1a6 6 0 0 1-6-6z" fill="#fff" stroke="#ee7f45" stroke-width="2.6" stroke-linejoin="round"/><path d="M24 26h16M24 32h10" stroke="#ee7f45" stroke-width="2.6" stroke-linecap="round"/><path d="M49 12l1.4 3.2 3.2 1.4-3.2 1.4L49 21.2l-1.4-3.2-3.2-1.4 3.2-1.4z" fill="#ee7f45"/></svg>
+            <h3>Gentle nudges</h3>
+            <p>A friendly reminder when chatbot use starts to look unhealthy, like "Who in your life could you tell this to?"</p>
+          </div>
+          <div class="card">
+            <svg class="ill" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="20" fill="#eef0ff"/><rect x="16" y="16" width="32" height="32" rx="8" fill="#fff" stroke="#5046e5" stroke-width="2.6"/><path d="M24 40v-6M32 40V26M40 40v-9" stroke="#5046e5" stroke-width="3.4" stroke-linecap="round"/></svg>
+            <h3>A private dashboard</h3>
+            <p>Your week at a glance: feelings by hour and day, interests, and time spent with each chatbot.</p>
+          </div>
+          <div class="card">
+            <svg class="ill" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="20" fill="#e5f7ef"/><path d="M14 32s6.5-11 18-11 18 11 18 11-6.5 11-18 11-18-11-18-11z" fill="#fff" stroke="#12a37a" stroke-width="2.6" stroke-linejoin="round"/><circle cx="32" cy="32" r="5.5" fill="#12a37a"/></svg>
+            <h3>Always visible</h3>
+            <p>A small "Bridge.ai" badge shows on every chat it covers, so it's never hidden. Pause it whenever you like.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- modes -->
     <section id="modes">
-      <h2>Two modes</h2>
-      <div class="modes">
-        <div>
-          <h3>Parent mode, for adults</h3>
-          <ul>
-            <li>See your own feelings and interests in AI chats</li>
-            <li>Personal info is paused: remove it, or send anyway</li>
-            <li>Nothing is ever blocked</li>
-          </ul>
+      <div class="wrap">
+        <div class="head">
+          <span class="eyebrow">Two modes</span>
+          <h2>For you, or to protect a child</h2>
+          <p>Pick one when you set it up. You can switch later; leaving Child mode needs the parent PIN.</p>
         </div>
-        <div>
-          <h3>Child mode, set up by a parent</h3>
-          <ul>
-            <li>Risky messages are held back before the chatbot gets them</li>
-            <li>Personal info is removed, or sent once a parent approves with a PIN</li>
-            <li>A parent sees only what was held back, never the child's messages</li>
-          </ul>
+        <div class="modes">
+          <div class="mode adult">
+            <div class="art">
+              <svg viewBox="0 0 400 190" preserveAspectRatio="xMidYMid meet" aria-hidden="true" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+                <!-- person at a laptop -->
+                <circle cx="150" cy="70" r="22" fill="#5046e5"/>
+                <path d="M112 150c0-24 17-40 38-40s38 16 38 40z" fill="#8a7cf3"/>
+                <rect x="168" y="112" width="96" height="58" rx="8" fill="#fff" stroke="#d6d2fb" stroke-width="2"/>
+                <rect x="150" y="168" width="132" height="8" rx="4" fill="#d6d2fb"/>
+                <path d="M188 150l14-12 12 8 16-18" fill="none" stroke="#5046e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <g filter="url(#lift-sm)"><rect x="262" y="38" width="96" height="34" rx="17" fill="#fff"/><circle cx="280" cy="55" r="6" fill="#12a37a"/><text x="292" y="60" font-size="13" font-weight="650" fill="#151826">Calm</text></g>
+                <g filter="url(#lift-sm)"><rect x="276" y="84" width="104" height="34" rx="17" fill="#fff"/><circle cx="294" cy="101" r="6" fill="#db4f93"/><text x="306" y="106" font-size="13" font-weight="650" fill="#151826">Pride</text></g>
+              </svg>
+            </div>
+            <div>
+              <div class="who">For adults</div>
+              <h3>Parent mode</h3>
+              <ul class="ticks">
+                <li>See your own feelings and interests in AI chats</li>
+                <li>A weekly pattern score, and what's behind it</li>
+                <li>Personal info is paused: remove it, or send anyway</li>
+                <li>Nothing is ever blocked; you're in charge</li>
+              </ul>
+            </div>
+          </div>
+          <div class="mode child">
+            <div class="art">
+              <svg viewBox="0 0 400 190" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <!-- parent and child with a shield -->
+                <circle cx="120" cy="62" r="22" fill="#12a37a"/>
+                <path d="M82 160c0-28 17-46 38-46s38 18 38 46z" fill="#5fcfa8"/>
+                <circle cx="190" cy="94" r="16" fill="#3b82f6"/>
+                <path d="M162 160c0-22 12-36 28-36s28 14 28 36z" fill="#86b6fa"/>
+                <g filter="url(#lift)">
+                  <path d="M290 40l46 18v30c0 29-20 54-46 63-26-9-46-34-46-63V58z" fill="#fff"/>
+                </g>
+                <path d="M290 54l34 13v22c0 21-14.5 39-34 46-19.5-7-34-25-34-46V67z" fill="url(#g-mint)"/>
+                <path d="M276 92l10 10 20-21" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <div class="who">Set up by a parent</div>
+              <h3>Child mode</h3>
+              <ul class="ticks">
+                <li>Risky messages are held back before the chatbot gets them</li>
+                <li>Personal info is removed, or sent once a parent approves with a PIN</li>
+                <li>A parent sees only what was held back, never the child's words</li>
+                <li>The child always sees that Bridge.ai is on</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="privacy">
-      <h2>Privacy</h2>
-      <p>Nothing you write leaves your computer. Bridge.ai has no server and no account.</p>
-      <ul class="muted">
-        <li>Messages are checked in memory and never stored.</li>
-        <li>No analytics, ads or tracking.</li>
-        <li>Counts are kept on your computer for at most 14 days.</li>
-        <li>The only download is the AI model itself, once.</li>
-      </ul>
-      <p><a href="privacy.html">Read the privacy policy</a></p>
+    <!-- privacy -->
+    <section class="tint" id="privacy">
+      <div class="wrap privacy">
+        <svg class="privacy-art" viewBox="0 0 480 400" role="img" aria-label="Illustration: a laptop with a shield on its screen. Messages stay on the laptop; nothing goes to the cloud." font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+          <circle cx="240" cy="200" r="176" fill="#fff"/>
+          <circle cx="240" cy="200" r="176" fill="none" stroke="#e1e4ef" stroke-width="2" stroke-dasharray="3 9"/>
+          <circle cx="240" cy="200" r="128" fill="#f3f2ff"/>
+          <!-- laptop -->
+          <rect x="136" y="132" width="208" height="134" rx="14" fill="#fff" stroke="#d6d2fb" stroke-width="2.5"/>
+          <rect x="150" y="146" width="180" height="106" rx="8" fill="#f7f6ff"/>
+          <rect x="108" y="264" width="264" height="14" rx="7" fill="#d6d2fb"/>
+          <g transform="translate(240 199)">
+            <path d="M0-38l30 12v20c0 19-13 35-30 41-17-6-30-22-30-41v-20z" fill="url(#g-accent)"/>
+            <rect x="-11" y="-6" width="22" height="17" rx="4" fill="#fff"/>
+            <path d="M-6.5-6v-5a6.5 6.5 0 0 1 13 0v5" fill="none" stroke="#fff" stroke-width="3.2"/>
+          </g>
+          <!-- crossed-out cloud -->
+          <g transform="translate(372 66)">
+            <path d="M-34 14c0-12 9-20 20-20 7 0 13 3.5 16.5 9 1.5-.5 3.5-1 5.5-1 9 0 16 7 16 15.5 0 .5 0 1-.1 1.5H-34z" fill="#fff" stroke="#d9dce8" stroke-width="2"/>
+            <line x1="-30" y1="-12" x2="22" y2="26" stroke="#db4f93" stroke-width="3.5" stroke-linecap="round"/>
+          </g>
+          <!-- words staying put -->
+          <g filter="url(#lift-sm)"><rect x="40" y="96" width="112" height="36" rx="18" fill="#fff"/><text x="96" y="119" font-size="13" font-weight="650" fill="#151826" text-anchor="middle">Your words</text></g>
+          <g filter="url(#lift-sm)"><rect x="330" y="300" width="124" height="36" rx="18" fill="#fff"/><text x="392" y="323" font-size="13" font-weight="650" fill="#12a37a" text-anchor="middle">Stay right here</text></g>
+        </svg>
+        <div>
+          <span class="eyebrow">Privacy</span>
+          <h2>Nothing you write leaves your computer</h2>
+          <p class="muted" style="font-size:18px;margin:0">Bridge.ai has no server and no account. It can't share what it never collects.</p>
+          <ul class="promises">
+            <li><span class="dot" style="background:#eef0ff"><svg viewBox="0 0 24 24" fill="none" stroke="#5046e5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><div><b>Never stored</b><span>Messages are checked in memory, then forgotten.</span></div></li>
+            <li><span class="dot" style="background:#fdebf4"><svg viewBox="0 0 24 24" fill="none" stroke="#db4f93" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span><div><b>No tracking</b><span>No analytics, no ads, no accounts.</span></div></li>
+            <li><span class="dot" style="background:#e5f7ef"><svg viewBox="0 0 24 24" fill="none" stroke="#12a37a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><div><b>Kept 14 days at most</b><span>Only simple counts, only on your computer.</span></div></li>
+            <li><span class="dot" style="background:#e8f2ff"><svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span><div><b>One download</b><span>The AI model itself, once. Nothing about you is sent.</span></div></li>
+          </ul>
+          <a class="link" href="privacy.html">Read the privacy policy →</a>
+        </div>
+      </div>
     </section>
 
+    <!-- install -->
     <section id="install">
-      <h2>How to install</h2>
-      <p class="muted">Bridge.ai isn't in the Chrome Web Store yet, so it takes a few extra steps. Chrome on a computer only.</p>
-      <ol>
-        <li><a href="download/bridge-ai-extension.zip" data-install>Download the zip</a> and unzip it. Keep the <b>bridge-ai</b> folder somewhere permanent, like Documents.</li>
-        <li>In Chrome, go to <code>chrome://extensions</code> and turn on <b>Developer mode</b> (top right).</li>
-        <li>Click <b>Load unpacked</b> and choose the <b>bridge-ai</b> folder.</li>
-        <li>Bridge.ai's setup page opens. Choose Parent or Child mode and agree.</li>
-      </ol>
-      <p class="muted" style="font-size:15px">To update later, replace the folder with the new one and click the reload arrow on Bridge.ai in <code>chrome://extensions</code>.</p>
+      <div class="wrap">
+        <div class="head">
+          <span class="eyebrow">Install</span>
+          <h2>Ready in about two minutes</h2>
+          <p>Bridge.ai isn't in the Chrome Web Store yet, so it takes four quick steps. Works with Chrome on a computer.</p>
+        </div>
+        <ol class="steps">
+          <li>
+            <div class="pic"><svg viewBox="0 0 150 100" aria-hidden="true"><path d="M30 26a6 6 0 0 1 6-6h22l8 8h48a6 6 0 0 1 6 6v46a6 6 0 0 1-6 6H36a6 6 0 0 1-6-6z" fill="#ffcf73"/><path d="M30 40h90v40a6 6 0 0 1-6 6H36a6 6 0 0 1-6-6z" fill="#ffdb94"/><path d="M75 40v8M75 52v6M75 62v6" stroke="#c98a1b" stroke-width="4" stroke-linecap="round"/><circle cx="118" cy="24" r="16" fill="#5046e5"/><path d="M118 16v14M112 25l6 6 6-6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Download and unzip</h3>
+            <p><a href="download/bridge-ai-extension.zip" data-install>Download the zip</a> and unzip it. Keep the <b>bridge-ai</b> folder in Documents.</p>
+          </li>
+          <li>
+            <div class="pic"><svg viewBox="0 0 150 100" aria-hidden="true" font-family="system-ui, -apple-system, Segoe UI, sans-serif"><rect x="2" y="28" width="146" height="44" rx="12" fill="#fff" stroke="#e1e4ef" stroke-width="2"/><text x="13" y="54" font-size="11" font-weight="650" fill="#151826">Developer mode</text><rect x="114" y="40" width="26" height="20" rx="10" fill="#5046e5"/><circle cx="130" cy="50" r="7" fill="#fff"/></svg></div>
+            <h3>Turn on Developer mode</h3>
+            <p>Go to <code>chrome://extensions</code> and switch on <b>Developer mode</b>, top right.</p>
+          </li>
+          <li>
+            <div class="pic"><svg viewBox="0 0 150 100" aria-hidden="true" font-family="system-ui, -apple-system, Segoe UI, sans-serif"><rect x="20" y="32" width="104" height="34" rx="9" fill="#fff" stroke="#c9c4ff" stroke-width="2"/><text x="72" y="54" font-size="13" font-weight="700" fill="#5046e5" text-anchor="middle">Load unpacked</text><path d="M108 58l0 26 7-6 5 11 5-2-5-11 9-1z" fill="#151826" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></div>
+            <h3>Load the folder</h3>
+            <p>Click <b>Load unpacked</b> and choose the <b>bridge-ai</b> folder.</p>
+          </li>
+          <li>
+            <div class="pic"><svg viewBox="0 0 150 100" aria-hidden="true"><circle cx="75" cy="50" r="30" fill="url(#g-mint)"/><path d="M62 50l9 9 17-18" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 26l2 4.6 4.6 2-4.6 2L30 39.2l-2-4.6-4.6-2 4.6-2zM120 62l1.6 3.6 3.6 1.6-3.6 1.6-1.6 3.6-1.6-3.6-3.6-1.6 3.6-1.6zM114 18l1.2 2.8 2.8 1.2-2.8 1.2-1.2 2.8-1.2-2.8-2.8-1.2 2.8-1.2z" fill="#ffc94d"/></svg></div>
+            <h3>Finish setup</h3>
+            <p>Bridge.ai opens its setup page. Choose Parent or Child mode, and you're done.</p>
+          </li>
+        </ol>
+        <div class="install-cta">
+          <a class="btn big" href="download/bridge-ai-extension.zip" data-install>Download for Chrome</a>
+          <p>We'll guide you through each step.</p>
+        </div>
+      </div>
     </section>
 
-    <section id="faq">
-      <h2>Questions</h2>
-      <details>
-        <summary>Which sites does it work on?</summary>
-        <p>ChatGPT and Gemini. On Claude and Character.AI it only counts time. It doesn't read any other website.</p>
-      </details>
-      <details>
-        <summary>Why does Chrome mention "Developer mode"?</summary>
-        <p>Chrome asks for it for any extension that isn't from the Chrome Web Store. All of Bridge.ai's code is on <a href="https://github.com/BridgeOne-ai/Bridge.ai">GitHub</a>.</p>
-      </details>
-      <details>
-        <summary>Can a child turn Child mode off?</summary>
-        <p>Not from Bridge.ai: that needs the parent PIN. But a child could use Incognito, another browser, or remove the extension. For full control, use Google Family Link too.</p>
-      </details>
-      <details>
-        <summary>Does it work on phones or other browsers?</summary>
-        <p>It's made for Chrome on Windows, Mac and Linux computers. It doesn't run on phones.</p>
-      </details>
-      <details>
-        <summary>Is it a safety or medical tool?</summary>
-        <p>No. It's a supplement to talking with each other, not a safety guarantee. If you or someone you know is in crisis, contact local emergency services or a crisis line (in the US, call or text 988).</p>
-      </details>
+    <!-- faq -->
+    <section class="tint" id="faq">
+      <div class="wrap">
+        <div class="head">
+          <span class="eyebrow">Questions</span>
+          <h2>Good to know</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Which sites does it work on?</summary>
+            <p>ChatGPT and Gemini get everything: feelings, interests, the personal info guard and Child-mode protection. On Claude and Character.AI it only counts time. It doesn't read any other website.</p>
+          </details>
+          <details>
+            <summary>Why does Chrome mention "Developer mode"?</summary>
+            <p>Chrome asks for it for any extension that isn't from the Chrome Web Store. It's expected, and all of Bridge.ai's code is open on <a href="https://github.com/BridgeOne-ai/Bridge.ai">GitHub</a>.</p>
+          </details>
+          <details>
+            <summary>Can a child turn Child mode off?</summary>
+            <p>Not from Bridge.ai: leaving Child mode, pausing it, or approving a held-back message needs the parent PIN. A determined child could still use Incognito, another browser, or remove the extension, so for full control use Google Family Link alongside it.</p>
+          </details>
+          <details>
+            <summary>Does it work offline? Does it slow things down?</summary>
+            <p>After a one-time download of the AI model it works offline, and checks are usually quick. Until the model has downloaded, simpler built-in checks run instead.</p>
+          </details>
+          <details>
+            <summary>Does it work on phones or in other browsers?</summary>
+            <p>It's made for Chrome on Windows, Mac and Linux computers. It doesn't run on phones or tablets.</p>
+          </details>
+          <details>
+            <summary>Is it a safety or medical tool?</summary>
+            <p>No. Bridge.ai is a supplement to talking with each other, not a safety guarantee or a medical tool. If you or someone you know is in crisis, contact local emergency services or a crisis line (in the US, call or text 988).</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- closing -->
+    <section>
+      <div class="wrap">
+        <div class="band">
+          <span class="ring" style="width:320px;height:320px;left:-90px;top:-140px" aria-hidden="true"></span>
+          <span class="ring" style="width:420px;height:420px;right:-160px;bottom:-240px" aria-hidden="true"></span>
+          <h2>Give your AI chats a kinder companion</h2>
+          <p>Free, open source, and private by design.</p>
+          <a class="btn big" href="download/bridge-ai-extension.zip" data-install>Download for Chrome</a>
+        </div>
+      </div>
     </section>
   </main>
 
   <footer>
     <div class="wrap">
-      <p>Bridge.ai, started at ShellHacks 2026 by Rukaiya Khan, Krishna Niveditha, Atul and Vivek C. MIT licensed.</p>
-      <p>The AI model, EmbeddingGemma, is provided under Google's <a href="https://ai.google.dev/gemma/terms">Gemma Terms of Use</a>. ChatGPT, Gemini, Claude, Character.AI and Chrome are trademarks of their owners; Bridge.ai isn't affiliated with them.</p>
-      <p><a href="privacy.html">Privacy policy</a> · <a href="https://github.com/BridgeOne-ai/Bridge.ai">GitHub</a></p>
+      <div>
+        <p><b>Bridge.ai</b>, started at ShellHacks 2026 by Rukaiya Khan, Krishna Niveditha, Atul and Vivek C. MIT licensed.</p>
+        <p>The AI model, EmbeddingGemma, is provided under Google's <a href="https://ai.google.dev/gemma/terms">Gemma Terms of Use</a>. ChatGPT, Gemini, Claude, Character.AI and Chrome are trademarks of their owners; Bridge.ai isn't affiliated with them.</p>
+      </div>
+      <div>
+        <p><a href="privacy.html">Privacy policy</a></p>
+        <p><a href="https://github.com/BridgeOne-ai/Bridge.ai">Source code on GitHub</a></p>
+      </div>
     </div>
   </footer>
   <script src="install.js"></script>

@@ -34,7 +34,6 @@
     .bi { --bg:#fff; --text:#1a1a1a; --muted:#5c5c5c; --line:#e6e6e6; --soft:#f5f5f5; --accent:#3b3bd1; --on:#fff; --ok:#1a1a1a; --warn:#7a4d00; --warn-bg:#f5f5f5;
       border:1px solid var(--line); padding:0; border-radius:12px; width:min(560px, calc(100vw - 24px)); max-height:calc(100dvh - 24px);
       background:var(--bg); color:var(--text); box-shadow:0 12px 40px rgba(0,0,0,.18); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
-    @media (prefers-color-scheme: dark) { .bi { --bg:#121212; --text:#ececec; --muted:#a3a3a3; --line:#2b2b2b; --soft:#1c1c1c; --accent:#9c9cff; --on:#121212; --ok:#ececec; --warn:#e8c066; --warn-bg:#1c1c1c; } }
     .bi::backdrop { background:rgba(0,0,0,.45); }
     .bi-head { display:flex; align-items:center; gap:12px; padding:22px 24px 0; }
     .bi-head h2 { margin:0; font-size:20px; flex:1; }
