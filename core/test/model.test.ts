@@ -4,7 +4,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { createMatcher, type Matcher, type Scores } from "../src/semantic/matcher.js";
 import { loadEmbedder } from "../src/semantic/model.js";
-import { LABEL_THRESHOLD, MODEL_ID, SAFETY_THRESHOLD } from "../src/config.js";
+import { INTEREST_THRESHOLD, LABEL_THRESHOLD, MODEL_ID, SAFETY_THRESHOLD } from "../src/config.js";
 import { SAFETY_CATEGORIES } from "../src/safety.js";
 import { CASES } from "./model-cases.js";
 
@@ -18,7 +18,11 @@ function fired(s: Scores): string[] {
   const safety = new Set<string>(SAFETY_CATEGORIES);
   const all: Record<string, number> = { ...s.topics, ...s.excluded, ...s.flags, whereabouts: s.whereabouts };
   const out = Object.entries(all).filter(([, v]) => v >= LABEL_THRESHOLD).map(([k]) => k);
-  return [...out, ...Object.entries(s.safety).filter(([k, v]) => safety.has(k) && v >= SAFETY_THRESHOLD).map(([k]) => k)];
+  return [
+    ...out,
+    ...Object.entries(s.safety).filter(([k, v]) => safety.has(k) && v >= SAFETY_THRESHOLD).map(([k]) => k),
+    ...Object.entries(s.interests).filter(([, v]) => v >= INTEREST_THRESHOLD).map(([k]) => k),
+  ];
 }
 
 describe("on-device model on held-out sentences", () => {

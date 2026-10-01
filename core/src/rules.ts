@@ -27,6 +27,7 @@ export function rulesLabel(user: Turn, _bot: Turn | null): TurnLabels {
   const abuseAtHome = ABUSE_RE.test(t) || ABUSE_COMPACT_RE.test(compactText);
   return {
     topics: [],
+    interests: [],
     dependency: false,
     isolation: false,
     botHook: false,

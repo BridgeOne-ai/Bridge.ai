@@ -2,6 +2,7 @@
 import type { Site } from "../../../core/src/types";
 import type { ToWorker } from "../messages";
 import { toWorker } from "./send";
+import { isActive } from "./active";
 import { startPrivacyGuard } from "../privacy/guard";
 import { mountShadow } from "../ui/shadow";
 import * as store from "../storage";
@@ -14,8 +15,15 @@ export function startProtection(site: Site, selectors: { composer: string; sendB
   startPrivacyGuard({
     root: mountShadow(),
     selectors,
-    isStrict: async () => { const s = await settings(); return s.mode === "child" && s.privacyStrict; },
+    isActive,
     isChild: async () => (await settings()).mode === "child",
+    // The service worker opens the approval window and answers once a parent decides. No answer (the
+    // extension was reloaded) is a "no".
+    askParent: async (what, findings) => {
+      if (!chrome.runtime?.id) return false;
+      const msg: ToWorker = { type: "parent-approval", site, what, findings };
+      return (await chrome.runtime.sendMessage(msg).catch(() => false)) === true;
+    },
     report: (what, findings, outcome) => {
       const msg: ToWorker = { type: "privacy-pause", site, what, findings, outcome };
       toWorker(msg);

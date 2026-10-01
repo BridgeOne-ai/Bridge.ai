@@ -1,6 +1,7 @@
 // Switching between Parent and Child mode, shared by the popup and the Options page. Turning Child mode
 // on never needs the PIN (it only adds protection); turning it off, or changing its settings, does.
 import { checkPin, makeLock } from "./lock";
+import * as pause from "./pause";
 import * as store from "./storage";
 import type { Mode } from "./storage";
 
@@ -38,7 +39,9 @@ export async function setPin(pin: string, again: string): Promise<Unlock> {
   }
 }
 
-// Call after needs(to) is satisfied (setPin or unlock succeeded).
+// Call after needs(to) is satisfied (setPin or unlock succeeded). Switching ends any pause, so a pause
+// started in Parent mode can't carry over into Child mode.
 export async function switchTo(to: Mode): Promise<void> {
+  if ((await store.get("settings")).mode !== to) await pause.resume();
   await store.set("settings", { ...(await store.get("settings")), mode: to });
 }

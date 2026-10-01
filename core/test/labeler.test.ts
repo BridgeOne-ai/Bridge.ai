@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { labelTurn } from "../src/labeler.js";
-import { LABEL_THRESHOLD } from "../src/config.js";
+import { INTEREST_THRESHOLD, LABEL_THRESHOLD } from "../src/config.js";
 import { fakeMatcher, turn } from "./helpers.js";
 
 describe("labelTurn", () => {
@@ -14,6 +14,16 @@ describe("labelTurn", () => {
     });
     const l = await labelTurn(turn("you're the only one who gets me"), null, { matcher: m });
     expect(l).toMatchObject({ source: "rules+model", topics: ["loneliness"], dependency: true, isolation: false, excludedTopics: ["religion"] });
+  });
+
+  it("keeps up to two interests from the user's message, best first, and none from the reply", async () => {
+    const m = fakeMatcher({
+      "soccer then math then chess": { math: 0.8, soccer: 0.9, coding: INTEREST_THRESHOLD, cooking: INTEREST_THRESHOLD - 0.01 },
+      "let's talk about anime": { anime: 0.9 },
+    });
+    expect((await labelTurn(turn("soccer then math then chess"), null, { matcher: m })).interests).toEqual(["soccer", "math"]);
+    expect((await labelTurn(turn("hi"), turn("let's talk about anime", "bot"), { matcher: m })).interests).toEqual([]);
+    expect((await labelTurn(turn("soccer then math then chess"), null)).interests).toEqual([]); // rules only
   });
 
   it("checks the chatbot's reply for engagement hooks, and only the reply", async () => {

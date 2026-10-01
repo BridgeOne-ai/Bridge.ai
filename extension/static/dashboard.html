@@ -13,9 +13,10 @@
       <div class="pill mono" id="side-model"></div>
       <nav>
         <a href="#top" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Overview</a>
-        <a href="#timeline"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 4 8-9"/></svg>Timeline</a>
-        <a href="#feelings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.3 1.5 3.5 1.5 3.5-1.5 3.5-1.5M9 9.5h.01M15 9.5h.01"/></svg>Feelings</a>
-        <a href="#chatbots"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chatbots</a>
+        <a class="parent-only" href="#timeline"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-6 4 4 8-9"/></svg>Timeline</a>
+        <a class="parent-only" href="#feelings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.3 1.5 3.5 1.5 3.5-1.5 3.5-1.5M9 9.5h.01M15 9.5h.01"/></svg>Feelings</a>
+        <a class="parent-only" href="#interests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>Interests</a>
+        <a class="parent-only" href="#chatbots"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chatbots</a>
       </nav>
       <div class="side-foot">
         <div class="mode-card">
@@ -28,9 +29,10 @@
 
     <main id="top">
       <div class="strip">
-        <div class="chip mono" id="chip-level"></div>
-        <div class="chip mono" id="chip-messages"></div>
-        <div class="chip plain mono" id="chip-time"></div>
+        <div class="chip mono parent-only" id="chip-level"></div>
+        <div class="chip mono parent-only" id="chip-messages"></div>
+        <div class="chip plain mono parent-only" id="chip-time"></div>
+        <div class="chip plain mono" id="chip-paused" hidden></div>
         <div class="strip-end">
           <button class="icon-btn" id="open-options" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
           <div class="who"><span class="avatar" id="who-avatar" aria-hidden="true"></span><div><div class="mono" id="who-name"></div><div class="mono faint small" id="who-sub"></div></div></div>
@@ -59,9 +61,28 @@
         <strong>Crisis language came up in the last day.</strong>
         If someone may be in danger, contact local emergency services or a crisis line now. Bridge.ai is not a safety guarantee.
       </div>
+      <div class="callout info" id="paused-banner" hidden>
+        <span><strong id="paused-title"></strong> Nothing is recorded during a pause. Safety and privacy checks still run.</span>
+        <button class="btn-outline mono" id="resume">Resume tracking</button>
+      </div>
       <p class="card empty" id="empty" hidden></p>
 
-      <div class="grid three">
+      <section class="card child-only" id="protection" hidden>
+        <div class="card-head">
+          <div><div class="eyebrow mono">Child mode</div><h2>What Bridge.ai held back</h2></div>
+        </div>
+        <div class="protect-grid">
+          <div class="soft-tile col"><span class="muted mono small">Held back as unsafe</span><b id="p-unsafe"></b></div>
+          <div class="soft-tile col"><span class="muted mono small">Chatbot as a friend or partner</span><b id="p-rel"></b></div>
+          <div class="soft-tile col"><span class="muted mono small">Personal info paused</span><b id="p-privacy"></b></div>
+          <div class="soft-tile col"><span class="muted mono small">Sent with details removed</span><b id="p-masked"></b></div>
+          <div class="soft-tile col"><span class="muted mono small">Sent after you approved</span><b id="p-approved"></b></div>
+        </div>
+        <p class="mono small muted" id="p-kinds"></p>
+        <p class="mono small faint">Counts only. Bridge.ai never shows the child's messages, feelings or topics, and nothing leaves this computer. The child sees a "Protected by Bridge.ai" notice on every chat.</p>
+      </section>
+
+      <div class="grid three parent-only">
         <section class="card">
           <div class="card-head"><div><div class="eyebrow mono">Most common feeling</div><h2>Current dominant feeling</h2></div><span class="tag mono" id="balance-tag"></span></div>
           <div class="dominant">
@@ -94,7 +115,7 @@
         </section>
       </div>
 
-      <div class="grid wide" id="timeline">
+      <div class="grid wide parent-only" id="timeline">
         <section class="card">
           <div class="card-head">
             <div><div class="eyebrow mono">Through the day</div><h2>Harder and good feelings by hour</h2></div>
@@ -117,7 +138,7 @@
         </section>
       </div>
 
-      <div class="grid three" id="feelings">
+      <div class="grid three parent-only" id="feelings">
         <section class="card">
           <div class="card-head"><div><div class="eyebrow mono">Last 7 days</div><h2>Feelings by day</h2></div></div>
           <div class="chart-box short"><canvas id="week-chart" role="img" aria-label="Harder and good feelings by day"></canvas></div>
@@ -145,6 +166,15 @@
           <p class="mono small muted" id="privacy-kinds"></p>
         </section>
       </div>
+      <section class="card parent-only" id="interests">
+        <div class="card-head">
+          <div><div class="eyebrow mono">What chats are about</div><h2>Interests</h2></div>
+          <span class="tag mono" id="interests-tag"></span>
+        </div>
+        <div class="interest-grid" id="interest-grid"></div>
+        <p class="mono small faint">Worked out on this computer from each message's meaning. Interests are never shared, not even in Child mode.</p>
+        <details><summary class="mono small">Show as a table</summary><table id="interests-table"></table></details>
+      </section>
       <p class="mono small faint footer">Messages are read on this computer and never stored. Bridge.ai is a supplement to talking with each other, not a safety guarantee.</p>
     </main>
   </div>

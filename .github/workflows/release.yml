@@ -1,0 +1,34 @@
+# Publishes a new version for the website's Download button.
+# Bump "version" in extension/static/manifest.json, commit, then push a matching tag:
+#   git tag v0.3.0 && git push origin v0.3.0
+# This runs the tests, builds and zips the extension (npm run package), and attaches the zip to a
+# GitHub Release. The website links to releases/latest/download/bridge-ai-extension.zip.
+name: Release extension
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Tag matches the manifest version
+        run: |
+          v=$(node -p "require('./extension/static/manifest.json').version")
+          if [ "v$v" != "$GITHUB_REF_NAME" ]; then echo "Tag $GITHUB_REF_NAME doesn't match manifest version $v"; exit 1; fi
+      - run: npm test
+      - run: npm run package
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.zip
+          generate_release_notes: true

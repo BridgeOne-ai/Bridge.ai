@@ -2,7 +2,14 @@
 // src/semantic/labels.ts: never copy one of these into labels.ts, or the test stops measuring anything.
 // `expect` lists labels that must be found; `never` lists labels that must not be. `knownMiss` marks a
 // case the model gets wrong today: the test expects it to fail, and says so once the model gets it right.
+import { INTERESTS } from "../src/types.js";
+
 export interface ModelCase { text: string; expect?: string[]; never?: string[]; knownMiss?: true }
+
+// Interests: the one expected, and no other.
+const only = (interest: string): Pick<ModelCase, "expect" | "never"> =>
+  ({ expect: [interest], never: INTERESTS.filter((i) => i !== interest) });
+const NO_INTEREST: Pick<ModelCase, "never"> = { never: [...INTERESTS] };
 
 const SAFE = ["self_harm", "abuse_at_home", "stranger_danger", "sexual_content", "violence", "ai_romance", "ai_friendship"];
 
@@ -65,4 +72,74 @@ export const CASES: ModelCase[] = [
   { text: "I love this app, thank you", never: ["ai_romance", ...SAFE] },
   { text: "what's the best way to kill weeds in the garden", never: [...SAFE, "crisis"] },
   { text: "our school is doing a fundraiser, give me ideas", never: [...SAFE, "whereabouts"] },
+  // interests: what a message is about
+  { text: "we won our soccer tournament 3-1", ...only("soccer") },
+  { text: "can you help me practice free throws", ...only("basketball") },
+  { text: "I'm nervous about my basketball game", ...only("basketball") },
+  { text: "the chiefs won again last night", ...only("american_football") },
+  { text: "what's a good bat for little league", ...only("baseball"), knownMiss: true }, // as close to cricket
+  { text: "virat kohli is my favorite player", ...only("cricket") },
+  { text: "how do I hit a topspin forehand", ...only("racket_sports") },
+  { text: "I need to cut time off my 200 free", ...only("swimming") },
+  { text: "how do I pace myself in a half marathon", ...only("running") },
+  { text: "what's the difference between muay thai and kickboxing", ...only("martial_arts") },
+  { text: "best exercises for abs", ...only("fitness") },
+  { text: "I want to join a hip hop dance crew", ...only("dance") },
+  { text: "I need help with trigonometry", ...only("math") },
+  { text: "what's the integral of x squared", ...only("math") },
+  { text: "why is the sky blue, what's the physics", ...only("physics") },
+  { text: "what is an ionic bond", ...only("chemistry") },
+  { text: "I'm so stressed about my chemistry test tomorrow", ...only("chemistry"), knownMiss: true }, // the feeling outweighs the subject
+  { text: "what is mitosis", ...only("biology") },
+  { text: "explain the french revolution", ...only("history") },
+  { text: "who invented the printing press", ...only("history"), knownMiss: true }, // as close to tech
+  { text: "how do you say thank you in korean", ...only("languages"), knownMiss: true }, // "thank you" reads as small talk
+  { text: "write an essay about the great gatsby", ...only("english_literature") },
+  { text: "how do I get rich", ...only("economics_business") },
+  { text: "what's a good stock to invest in", ...only("economics_business") },
+  { text: "is there life on other planets", ...only("space") },
+  { text: "how far away is jupiter", ...only("space") },
+  { text: "my python script throws an error", ...only("coding") },
+  { text: "how do I center a div in css", ...only("coding") },
+  { text: "is chatgpt smarter than a human", ...only("tech_ai") },
+  { text: "should I get an ipad or a laptop", ...only("tech_ai") },
+  { text: "what's a good horror movie", ...only("movies_tv") },
+  { text: "who's the best character in demon slayer", ...only("anime") },
+  { text: "what are the best songs by drake", ...only("music") },
+  { text: "taylor swift tickets are so expensive", ...only("music") },
+  { text: "how do I get past level 5 in mario", ...only("video_games") },
+  { text: "recommend a game like zelda", ...only("video_games") },
+  { text: "suggest a mystery novel", ...only("books") },
+  { text: "how do youtubers make money", ...only("social_media"), knownMiss: true }, // as close to business
+  { text: "how do I grow my tiktok", ...only("social_media") },
+  { text: "how do I shade with pencils", ...only("drawing_art") },
+  { text: "teach me a song on ukulele", ...only("music_making") },
+  { text: "how do I tune a guitar", ...only("music_making") },
+  { text: "help me with my story's plot twist", ...only("creative_writing") },
+  { text: "how do I make my instagram photos look better", ...only("photo_video") },
+  { text: "what's a good camera for vlogging", ...only("photo_video") },
+  { text: "how to make pancakes", ...only("cooking") },
+  { text: "how do I make fried rice", ...only("cooking") },
+  { text: "what should I wear to prom", ...only("fashion_beauty") },
+  { text: "what's a good moisturizer for oily skin", ...only("fashion_beauty") },
+  { text: "things to do in new york", ...only("travel") },
+  { text: "my cat keeps scratching the couch", ...only("animals") },
+  { text: "how do I teach my dog to sit", ...only("animals") },
+  { text: "is a tesla better than a bmw", ...only("cars") },
+  { text: "how do I change a flat tire", ...only("cars"), knownMiss: true },
+  // no interest: small talk, feelings, and life with friends and family
+  { text: "hi there", ...NO_INTEREST },
+  { text: "thanks that helped", ...NO_INTEREST },
+  { text: "can you make this shorter", ...NO_INTEREST },
+  { text: "ok cool", ...NO_INTEREST },
+  { text: "can you explain that again", ...NO_INTEREST },
+  { text: "give me advice", ...NO_INTEREST },
+  { text: "what should I do", ...NO_INTEREST },
+  { text: "I don't know", ...NO_INTEREST },
+  { text: "I feel really lonely lately", ...NO_INTEREST },
+  { text: "I can't sleep", ...NO_INTEREST },
+  { text: "my mom is annoying", ...NO_INTEREST },
+  { text: "I have a crush on someone", ...NO_INTEREST },
+  { text: "I had a fight with my best friend", ...NO_INTEREST },
+  { text: "you're the only one who gets me", ...NO_INTEREST },
 ];

@@ -7,8 +7,9 @@ import {
 import type { Level, Topic } from "../../../core/src/types";
 import * as store from "../storage";
 import * as mode from "../mode";
+import * as pause from "../pause";
 import { FINDING_LABEL } from "../privacy/detect";
-import { TOPIC_LABEL } from "../ui/topics";
+import { CATEGORY_LABEL, INTEREST_LABEL, TOPIC_LABEL } from "../ui/topics";
 import { buildView, hourName, siteName, type Range } from "./data";
 
 Chart.register(LineController, LineElement, PointElement, BarController, BarElement, CategoryScale, LinearScale, Filler, Tooltip);
@@ -148,10 +149,12 @@ let allowed = false;
 
 async function render() {
   if (!allowed) return;
-  const [settings, profiles, hourly, nudgeLog, privacyFlags, model] = await Promise.all([
+  const current = await pause.current(); // settles a pause that has run out, before the log is read
+  const [settings, profiles, hourly, nudgeLog, privacyFlags, model, pauseLog] = await Promise.all([
     store.get("settings"), store.get("profiles"), store.get("hourly"), store.get("nudgeLog"), store.get("privacyFlags"), store.get("modelStatus"),
+    store.get("pauseLog"),
   ]);
-  const v = buildView({ mode: settings.mode, now: Date.now(), range, profiles, hourly, nudgeLog, privacyFlags });
+  const v = buildView({ mode: settings.mode, now: Date.now(), range, profiles, hourly, nudgeLog, privacyFlags, pause: current, pauseLog });
   const child = settings.mode === "child";
   const when = range === "today" ? "today" : "in the last 7 days";
 
@@ -166,12 +169,31 @@ async function render() {
   $("chip-level").replaceChildren("Pattern: ", status(v.level.level));
   $("chip-messages").replaceChildren("Messages: ", el("b", undefined, String(v.messages)));
   $("chip-time").replaceChildren("Time on AI: ", el("b", undefined, duration(v.minutes)));
+  $("chip-paused").hidden = !v.paused.minutes;
+  $("chip-paused").replaceChildren("Paused: ", el("b", undefined, duration(v.paused.minutes)));
+  $("paused-banner").hidden = !v.paused.now;
+  $("paused-title").textContent = v.paused.until === null
+    ? "Tracking is paused."
+    : `Tracking is paused until ${new Date(v.paused.until).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}.`;
+  // Child mode: only the protection card (and the pause banner); everything about feelings is hidden.
+  document.body.classList.toggle("child", child);
+  $("protection").hidden = !child;
+  if (child) {
+    $("p-unsafe").textContent = String(v.heldBack.unsafe);
+    $("p-rel").textContent = String(v.heldBack.relationship);
+    $("p-privacy").textContent = String(v.privacy.total);
+    $("p-masked").textContent = String(v.outcomes.masked);
+    $("p-approved").textContent = String(v.outcomes.approved);
+    $("p-kinds").textContent = v.privacy.kinds.length
+      ? `Personal info paused: ${v.privacy.kinds.map((k) => `${FINDING_LABEL[k.finding]} (${k.count})`).join(", ")}`
+      : `No personal info paused ${when}.`;
+  }
   $("who-avatar").textContent = child ? "C" : "Y";
   $("who-name").textContent = child ? "Child mode" : "You";
   $("who-sub").textContent = child ? "Viewing with the parent PIN" : "Only on this computer";
-  $("title").textContent = child ? "Your child's week with AI chats" : "Mood & Chat Overview";
+  $("title").textContent = child ? "Protection on this browser" : "Mood & Chat Overview";
   $("crisis").hidden = v.level.level !== "crisis";
-  $("empty").hidden = !v.empty;
+  $("empty").hidden = !v.empty || child; // the protection card has its own zeros
   $("empty").textContent = `Nothing ${when} yet. Feelings show up here as they're picked up in chats on Gemini and ChatGPT.`;
 
   // dominant feeling
@@ -259,6 +281,31 @@ async function render() {
   const also = [...v.feelings.other, ...v.feelings.life];
   $("life").textContent = also.length ? `Also came up: ${also.map((t) => `${lower(t.topic)} ${t.count}`).join(" · ")}` : "";
 
+  // interests: one tile per category, specific interests on one shared scale
+  const topInterest = Math.max(1, ...v.interests.flatMap((c) => c.items.map((i) => i.count)));
+  $("interest-grid").replaceChildren(...v.interests.map((c) => {
+    const tile = el("div", "interest-cat");
+    const top = el("div", "top");
+    top.append(el("b", undefined, CATEGORY_LABEL[c.category]), el("span", "mono small muted", String(c.count)));
+    const ul = el("ul", "flist");
+    ul.append(...c.items.map(({ interest, count }) => {
+      const li = el("li", "interest");
+      li.setAttribute("aria-label", `${INTEREST_LABEL[interest]}: ${count}`);
+      const bar = el("span", "bar");
+      const fill = el("i");
+      fill.style.width = `${(count / topInterest) * 100}%`;
+      bar.append(fill);
+      li.append(el("span", undefined, INTEREST_LABEL[interest]), bar, el("span", "n", String(count)));
+      return li;
+    }));
+    tile.append(top, ul);
+    return tile;
+  }));
+  if (!v.interests.length) $("interest-grid").append(el("p", "muted", `No interests picked up ${when} yet.`));
+  $("interests-tag").textContent = v.interests[0] ? `Mostly ${CATEGORY_LABEL[v.interests[0].category].toLowerCase()}` : "Nothing yet";
+  table($<HTMLTableElement>("interests-table"), ["Category", "Interest", "Messages"],
+    v.interests.flatMap((c) => c.items.map((i) => [CATEGORY_LABEL[c.category], INTEREST_LABEL[i.interest], i.count])));
+
   // chatbots and the safety gate
   $("site-list").replaceChildren(...v.sites.map((s) => {
     const row = el("div", "site");
@@ -285,6 +332,7 @@ for (const b of document.querySelectorAll<HTMLButtonElement>(".seg button")) {
     void render();
   });
 }
+$("resume").addEventListener("click", () => void pause.resume());
 for (const id of ["open-options", "settings-btn"]) $(id).addEventListener("click", () => void chrome.runtime.openOptionsPage());
 $("print").addEventListener("click", () => {
   for (const d of document.querySelectorAll("details")) d.open = true; // the tables print, not the hover
@@ -296,7 +344,7 @@ for (const a of document.querySelectorAll<HTMLAnchorElement>("nav a")) {
 
 // New turns and model progress update the page as they happen.
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.profiles || changes.hourly || changes.nudgeLog || changes.privacyFlags || changes.modelStatus) void render();
+  if (changes.profiles || changes.hourly || changes.nudgeLog || changes.privacyFlags || changes.modelStatus || changes.pause) void render();
   if (changes.settings) void start();
 });
 

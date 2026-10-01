@@ -7,10 +7,12 @@ import type { PauseOutcome } from "./ui/privacy";
 export type ToWorker =
   | { type: "turn"; turn: Turn }
   | { type: "heartbeat"; site: Site; ts: number; interacting: boolean }
-  // popup / options: send this week to the sync API now
-  | { type: "sync-now" }
-  // dashboard page (content/dashboard.ts): someone logged in there, so log the extension in too
-  | { type: "dashboard-session"; token: string; email: string }
+  // Child mode: may this be sent as typed? The service worker opens the parent approval window
+  // (approve.html) and answers true once a parent enters the PIN there. Kinds of info only, never text.
+  | { type: "parent-approval"; site: Site; what: "message" | "file"; findings: Finding[] }
+  // approve.html: what is it asking about, and the parent's answer
+  | { type: "approval-details"; id: number }
+  | { type: "approval-result"; id: number; approved: boolean }
   // privacy guard paused a message or upload. Kinds of info only, never the values.
   | { type: "privacy-pause"; site: Site; what: "message" | "file"; findings: Finding[]; outcome: PauseOutcome }
   // safety gate RPC: may this message go to the chatbot? Answered with a SafetyVerdict. The text is

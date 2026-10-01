@@ -3,13 +3,12 @@
   "private": true,
   "workspaces": [
     "core",
-    "extension",
-    "dashboard"
+    "extension"
   ],
   "scripts": {
     "build": "npm run build -w core && npm run build -w extension",
     "test": "npm test -w core && npm test -w extension",
-    "dev:dashboard": "npm run dev -w dashboard"
+    "package": "node scripts/package.mjs"
   },
   "license": "MIT"
 }

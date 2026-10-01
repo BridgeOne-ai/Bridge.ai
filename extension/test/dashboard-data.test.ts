@@ -48,15 +48,29 @@ describe("buildView", () => {
     expect(buildView(input({ hourly, range: "today" })).hours[23]).toEqual({ hour: 23, hard: 2, good: 1 });
   });
 
-  it("in Child mode hides crisis when abuse at home is in the same week; Parent mode shows its own", () => {
+  it("Parent mode shows an adult their own crisis level", () => {
+    const gemini = withTurns([{ crisis: true }, NOW - H]);
+    expect(buildView(input({ profiles: { gemini }, mode: "parent" })).level.level).toBe("crisis");
+  });
+
+  it("Child mode shows only what was held back: no feelings, interests, time, hours or level", () => {
     const gemini = withTurns(
-      [{ crisis: true }, NOW - H],
+      [{ crisis: true, topics: ["sadness"], interests: ["soccer"] }, NOW - H],
       [{ abuseAtHome: true, excludedTopics: ["abuse_or_conflict_at_home"] }, NOW - DAY],
     );
-    expect(buildView(input({ profiles: { gemini }, mode: "parent" })).level.level).toBe("crisis");
-    const child = buildView(input({ profiles: { gemini }, mode: "child" }));
-    expect(child.level.level).not.toBe("crisis");
-    expect(JSON.stringify(child)).not.toMatch(/crisis|abuse/);
+    const hourly = { "2026-09-03": { "19": { sadness: 2 } } };
+    const privacyFlags = { "2026-09-03": [
+      { hour: 19, site: "gemini" as const, what: "message" as const, findings: ["unsafe" as const], sent: false },
+      { hour: 19, site: "gemini" as const, what: "message" as const, findings: ["phone" as const], sent: false, hidden: true },
+      { hour: 19, site: "gemini" as const, what: "message" as const, findings: ["email" as const], sent: true, approved: true },
+    ] };
+    const v = buildView(input({ profiles: { gemini }, hourly, privacyFlags, mode: "child" }));
+    expect(v).toMatchObject({
+      messages: 0, minutes: 0, sites: [], interests: [], dominant: null, level: { level: "healthy" },
+      heldBack: { unsafe: 1, relationship: 0 }, outcomes: { masked: 1, approved: 1 }, privacy: { total: 2 },
+    });
+    expect(v.hours.every((h) => !h.hard && !h.good)).toBe(true);
+    expect(JSON.stringify(v)).not.toMatch(/crisis|abuse|sadness|soccer/);
   });
 
   it("lists sites by time, with their nudges and privacy pauses in the range", () => {
@@ -111,5 +125,20 @@ describe("buildView", () => {
     const today = buildView(input({ profiles: { gemini }, range: "today" }));
     expect(today.signals.dependency).toBe(0);
     expect(today.pattern.dependency).toBe(1);
+  });
+
+  it("groups interests by category across chatbots, most first, for the chosen range", () => {
+    const gemini = withTurns(
+      [{ interests: ["soccer"] }, NOW - H], [{ interests: ["soccer", "math"] }, NOW - 2 * H], [{ interests: ["basketball"] }, NOW - 2 * DAY],
+    );
+    const chatgpt = { ...withTurns([{ interests: ["math"] }, NOW - H], [{ interests: ["physics"] }, NOW - 3 * H]), site: "chatgpt" as const };
+    expect(buildView(input({ profiles: { gemini, chatgpt } })).interests).toEqual([ // a tie keeps the category order
+      { category: "sports", count: 3, items: [{ interest: "soccer", count: 2 }, { interest: "basketball", count: 1 }] },
+      { category: "studies", count: 3, items: [{ interest: "math", count: 2 }, { interest: "physics", count: 1 }] },
+    ]);
+    expect(buildView(input({ profiles: { gemini }, range: "today" })).interests).toEqual([
+      { category: "sports", count: 2, items: [{ interest: "soccer", count: 2 }] },
+      { category: "studies", count: 1, items: [{ interest: "math", count: 1 }] },
+    ]);
   });
 });

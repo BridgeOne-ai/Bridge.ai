@@ -39,8 +39,13 @@ describe("switching modes", () => {
   });
 
   it("keeps the other settings when switching", async () => {
-    await store.set("settings", { ...(await store.get("settings")), childId: "sam", nudgesEnabled: false });
+    await store.set("settings", { ...(await store.get("settings")), nudgesEnabled: false });
     await mode.switchTo("parent");
-    expect(await store.get("settings")).toMatchObject({ mode: "parent", childId: "sam", nudgesEnabled: false });
+    expect(await store.get("settings")).toEqual({ mode: "parent", nudgesEnabled: false });
+  });
+
+  it("drops settings left over from versions that synced to a server", async () => {
+    data.settings = { mode: "parent", nudgesEnabled: true, apiUrl: "http://localhost:8000", childId: "demo", privacyStrict: true };
+    expect(await store.get("settings")).toEqual({ mode: "parent", nudgesEnabled: true });
   });
 });

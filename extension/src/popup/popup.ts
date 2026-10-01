@@ -1,10 +1,11 @@
-// Toolbar popup: the Parent/Child switch (mode.ts), then feelings as 5-step meters. Parent mode shows the
-// last 7 days; Child mode shows today, plus Sync now. Labels only, never text.
+// Toolbar popup: the Parent/Child switch (mode.ts), pausing, then Parent mode's feelings over the last 7
+// days as 5-step meters, or Child mode's protection summary for today. Labels and counts only, never text.
 import type { Topic } from "../../../core/src/types";
 import * as store from "../storage";
 import type { Mode } from "../storage";
 import * as mode from "../mode";
-import type { ToWorker } from "../messages";
+import * as pause from "../pause";
+import type { PrivacyEntry } from "../days";
 import { dayKey, shiftDay } from "../../../core/src/time";
 import { TOPIC_LABEL, feelingGroup } from "../ui/topics";
 
@@ -31,28 +32,69 @@ function meter(t: Topic, count: number, when: string) {
   return row;
 }
 
+// Child mode: what was held back today. Counts only, so a parent opening the popup learns nothing more
+// than the dashboard would show them.
+function protectionToday(flags: PrivacyEntry[]): HTMLElement[] {
+  const n = (f: (e: PrivacyEntry) => boolean) => flags.filter(f).length;
+  const gate = (e: PrivacyEntry) => e.findings.includes("unsafe") || e.findings.includes("ai_relationship");
+  const rows: [string, number][] = [
+    ["Held back as unsafe or a chatbot relationship", n((e) => gate(e) && !e.sent)],
+    ["Personal info paused", n((e) => !gate(e))],
+    ["Sent with the details removed", n((e) => !!e.hidden)],
+    ["Sent after a parent approved", n((e) => !!e.approved)],
+  ];
+  return rows.map(([label, count]) => {
+    const row = el("div", "row other");
+    const top = el("div", "top");
+    top.append(el("span", undefined, label), el("span", "n", String(count)));
+    row.append(top);
+    return row;
+  });
+}
+
 async function render() {
-  const [settings, profiles, model] = await Promise.all([store.get("settings"), store.get("profiles"), store.get("modelStatus")]);
+  const [settings, profiles, model, paused, consent, privacyFlags] = await Promise.all([
+    store.get("settings"), store.get("profiles"), store.get("modelStatus"), pause.current(), store.get("consent"), store.get("privacyFlags"),
+  ]);
   const child = settings.mode === "child";
+  // Before setup only the way to finish it is shown: Bridge.ai isn't doing anything yet.
+  const ready = store.hasConsent(consent);
+  $("setup").hidden = ready;
+  $("ready").hidden = !ready;
+  if (!ready) return;
   $("mode-parent").setAttribute("aria-checked", String(!child));
   $("mode-child").setAttribute("aria-checked", String(child));
 
-  const today = dayKey(Date.now());
-  const from = child ? today : shiftDay(today, 6);
-  const counts = new Map<Topic, number>();
-  for (const p of Object.values(profiles)) {
-    for (const day of p?.days.filter((d) => d.date >= from && d.date <= today) ?? []) {
-      for (const [t, n] of Object.entries(day.topicCounts) as [Topic, number][]) counts.set(t, (counts.get(t) ?? 0) + n);
-    }
+  $("paused").hidden = !paused;
+  $("pause-open").hidden = !!paused || !$("pause-menu").hidden;
+  if (paused) {
+    $("paused-title").textContent = paused.until === null
+      ? "Tracking paused"
+      : `Tracking paused until ${new Date(paused.until).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}`;
+    $("paused-note").textContent = child
+      ? "Feelings and time aren't recorded. Unsafe messages are still held back."
+      : "Feelings and time aren't recorded. Privacy checks still run.";
   }
-  const sorted = [...counts].filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
-  $("title").textContent = child ? "Feelings today" : "Your feelings this week";
-  const when = child ? "today" : "this week";
-  $("feelings").replaceChildren(...sorted.map(([t, n]) => meter(t, n, when)));
-  if (!sorted.length) $("feelings").append(el("div", "empty", `Nothing picked up ${when} yet.`));
-  $("note").textContent = child
-    ? "Your parent sees topics and how often, never your words."
-    : "This stays on this computer. Nothing is shared.";
+
+  const today = dayKey(Date.now());
+  if (child) {
+    $("title").textContent = "Protection today";
+    $("feelings").replaceChildren(...protectionToday(privacyFlags[today] ?? []));
+    $("note").textContent = "Nothing you write leaves this computer. A parent sees only what was held back, never your words.";
+  } else {
+    const from = shiftDay(today, 6);
+    const counts = new Map<Topic, number>();
+    for (const p of Object.values(profiles)) {
+      for (const day of p?.days.filter((d) => d.date >= from && d.date <= today) ?? []) {
+        for (const [t, n] of Object.entries(day.topicCounts) as [Topic, number][]) counts.set(t, (counts.get(t) ?? 0) + n);
+      }
+    }
+    const sorted = [...counts].filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    $("title").textContent = "Your feelings this week";
+    $("feelings").replaceChildren(...sorted.map(([t, n]) => meter(t, n, "this week")));
+    if (!sorted.length) $("feelings").append(el("div", "empty", "Nothing picked up this week yet."));
+    $("note").textContent = "This stays on this computer. Nothing is shared.";
+  }
 
   $("model").hidden = model.state === "ready";
   $("model").textContent = model.state === "loading"
@@ -61,12 +103,12 @@ async function render() {
 
   $("dashboard").textContent = child ? "Parent dashboard" : "My dashboard";
   $("reset").hidden = child;
-  $("sync-now").hidden = !child;
 }
 
 // ---- switching modes ----
 
-let pending: { to: Mode; need: "new-pin" | "pin" } | null = null;
+// What the PIN form is for: leaving or entering Child mode, or starting a pause in Child mode.
+let pending: { need: "new-pin" | "pin"; then: () => Promise<void> } | null = null;
 
 function showPinForm(p: typeof pending) {
   pending = p;
@@ -88,7 +130,7 @@ async function choose(to: Mode) {
     showPinForm(null);
     await mode.switchTo(to);
   } else {
-    showPinForm({ to, need });
+    showPinForm({ need, then: () => mode.switchTo(to) });
   }
 }
 $("mode-parent").addEventListener("click", () => void choose("parent"));
@@ -104,43 +146,42 @@ $("pin").addEventListener("submit", async (e) => {
     $("pin-error").textContent = result.message;
     return;
   }
-  const { to } = pending;
+  const { then } = pending;
   showPinForm(null);
-  await mode.switchTo(to);
+  await then();
 });
+
+// ---- pausing ----
+
+function showPauseMenu(open: boolean) {
+  $("pause-menu").hidden = !open;
+  $("pause-open").hidden = open;
+}
+$("pause-open").addEventListener("click", () => { showPinForm(null); showPauseMenu(true); });
+$("pause-cancel").addEventListener("click", () => showPauseMenu(false));
+for (const b of document.querySelectorAll<HTMLButtonElement>("[data-pause]")) {
+  b.addEventListener("click", async () => {
+    const choice = b.dataset.pause as pause.PauseChoice;
+    showPauseMenu(false);
+    if (await pause.needsPin()) showPinForm({ need: "pin", then: () => pause.start(choice) });
+    else await pause.start(choice);
+  });
+}
+$("resume").addEventListener("click", () => void pause.resume());
 
 // ---- buttons ----
 
 // The dashboard page reads this browser's data directly; in Child mode it asks for the PIN.
 $("dashboard").addEventListener("click", () => void chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") }));
 
+$("finish-setup").addEventListener("click", () => void chrome.runtime.openOptionsPage());
+
 $("reset").addEventListener("click", async () => {
   if (!confirm("Delete this browser's Bridge.ai data (feelings, levels, usage)? Your settings stay.")) return;
   await store.resetData();
 });
 
-// The Sync button shows what happened, then goes back to its label.
-const syncBtn = $<HTMLButtonElement>("sync-now");
-let restore: ReturnType<typeof setTimeout> | undefined;
-function flash(text: string) {
-  clearTimeout(restore);
-  syncBtn.textContent = text;
-  syncBtn.disabled = false;
-  restore = setTimeout(() => { syncBtn.textContent = "Sync now"; }, 2500);
-}
-
-syncBtn.addEventListener("click", async () => {
-  if (!(await store.get("auth"))) return flash("Log in first (Options)");
-  clearTimeout(restore);
-  syncBtn.textContent = "Syncing…";
-  syncBtn.disabled = true;
-  const msg: ToWorker = { type: "sync-now" };
-  void chrome.runtime.sendMessage(msg).catch(() => flash("Couldn't sync"));
-});
-
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.profiles || changes.settings || changes.modelStatus) void render();
-  const status = changes.syncStatus?.newValue as { ok: boolean } | undefined;
-  if (status && syncBtn.disabled) flash(status.ok ? "Synced ✓" : "Sync failed");
+  if (changes.profiles || changes.settings || changes.modelStatus || changes.pause || changes.consent || changes.privacyFlags) void render();
 });
 void render();

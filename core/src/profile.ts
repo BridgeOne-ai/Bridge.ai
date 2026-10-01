@@ -7,7 +7,7 @@ export function emptyProfile(site: Site): Profile {
 
 function emptyBucket(date: string): DayBucket {
   return {
-    date, userTurns: 0, topicCounts: {}, excludedCounts: {},
+    date, userTurns: 0, topicCounts: {}, excludedCounts: {}, interestCounts: {},
     dependency: 0, isolation: 0, botHook: 0, crisis: 0, abuseAtHome: 0,
     lateNightTurns: 0, sessions: 0, activeMinutes: 0, lateNightSessions: 0,
   };
@@ -16,7 +16,9 @@ function emptyBucket(date: string): DayBucket {
 // Copies the profile, applies `fn` to the bucket for `ts`, keeps 7 calendar days ending that day.
 function withBucket(p: Profile, ts: number, fn: (b: DayBucket) => void): Profile {
   const key = dayKey(ts);
-  const days = p.days.map((d) => ({ ...d, topicCounts: { ...d.topicCounts }, excludedCounts: { ...d.excludedCounts } }));
+  const days = p.days.map((d): DayBucket => ({
+    ...d, topicCounts: { ...d.topicCounts }, excludedCounts: { ...d.excludedCounts }, interestCounts: { ...d.interestCounts },
+  }));
   let b = days.find((d) => d.date === key);
   if (!b) {
     b = emptyBucket(key);
@@ -33,6 +35,8 @@ export function updateProfile(p: Profile, labels: TurnLabels, ts: number): Profi
     b.userTurns += 1;
     for (const t of labels.topics) b.topicCounts[t] = (b.topicCounts[t] ?? 0) + 1;
     for (const t of labels.excludedTopics) b.excludedCounts[t] = (b.excludedCounts[t] ?? 0) + 1;
+    // Labels saved before interests existed (fixtures, eval replays) have none.
+    for (const i of labels.interests ?? []) b.interestCounts![i] = (b.interestCounts![i] ?? 0) + 1;
     if (labels.dependency) b.dependency += 1;
     if (labels.isolation) b.isolation += 1;
     if (labels.botHook) b.botHook += 1;

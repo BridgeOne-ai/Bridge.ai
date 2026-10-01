@@ -7,7 +7,7 @@ export type Role = "user" | "bot";
 
 export const LEVELS: readonly Level[] = ["healthy", "watch", "concerning", "crisis"];
 
-// Topics that may be shown to parents (as counts only): feelings first, then areas of life.
+// Topics shown on an adult's own dashboard (Parent mode), as counts only: feelings first, then areas of life.
 export const TOPICS = [
   "loneliness", "sadness", "stress", "anxiety", "anger", "self_worth",
   "hopelessness", "emptiness", "rejection", "guilt_shame", "overwhelm", "fear", "grief", "jealousy", "frustration",
@@ -17,7 +17,7 @@ export const TOPICS = [
 ] as const;
 export type Topic = (typeof TOPICS)[number];
 
-// Topics that are detected but NEVER reach parents.
+// Topics that are detected (so the right thing happens) but never shown anywhere, in either mode.
 export const EXCLUDED_TOPICS = [
   "sexual_orientation_gender_identity",
   "abuse_or_conflict_at_home",
@@ -25,6 +25,24 @@ export const EXCLUDED_TOPICS = [
   "religion",
 ] as const;
 export type ExcludedTopic = (typeof EXCLUDED_TOPICS)[number];
+
+// Interests: what someone chats about, by category (sports → soccer). Kept on this computer only, and
+// shown only in Parent mode (an adult's own dashboard). None of them is a sensitive topic.
+export const INTEREST_CATEGORIES = ["sports", "studies", "technology", "entertainment", "creative", "lifestyle"] as const;
+export type InterestCategory = (typeof INTEREST_CATEGORIES)[number];
+export const INTEREST_CATEGORY = {
+  soccer: "sports", basketball: "sports", american_football: "sports", baseball: "sports", cricket: "sports",
+  racket_sports: "sports", swimming: "sports", running: "sports", martial_arts: "sports", fitness: "sports", dance: "sports",
+  math: "studies", physics: "studies", chemistry: "studies", biology: "studies", history: "studies", languages: "studies",
+  english_literature: "studies", economics_business: "studies", space: "studies",
+  coding: "technology", tech_ai: "technology",
+  movies_tv: "entertainment", anime: "entertainment", music: "entertainment", video_games: "entertainment",
+  books: "entertainment", social_media: "entertainment",
+  drawing_art: "creative", music_making: "creative", creative_writing: "creative", photo_video: "creative",
+  cooking: "lifestyle", fashion_beauty: "lifestyle", travel: "lifestyle", animals: "lifestyle", cars: "lifestyle",
+} as const satisfies Record<string, InterestCategory>;
+export type Interest = keyof typeof INTEREST_CATEGORY;
+export const INTERESTS = Object.keys(INTEREST_CATEGORY) as Interest[];
 
 export interface Turn {
   id: string;             // stable per message: "<conversationId>:<role>:<index>"
@@ -37,6 +55,7 @@ export interface Turn {
 
 export interface TurnLabels {
   topics: Topic[];
+  interests: Interest[];  // at most 2, best first; the model only (no phrase rules)
   dependency: boolean;    // "you're the only one who gets me"
   isolation: boolean;     // withdrawing from friends/family
   botHook: boolean;       // bot discourages leaving, guilt-trips, escalates romance
@@ -58,6 +77,7 @@ export interface DayBucket {
   userTurns: number;
   topicCounts: Partial<Record<Topic, number>>;
   excludedCounts: Partial<Record<ExcludedTopic, number>>;
+  interestCounts?: Partial<Record<Interest, number>>; // missing on days stored before interests existed
   dependency: number;
   isolation: number;
   botHook: number;

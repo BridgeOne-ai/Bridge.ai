@@ -44,13 +44,39 @@
     button:hover { background: var(--btn-hover); }
     button.primary { background: var(--accent); color: var(--on-accent); }
     button:disabled { opacity: .6; cursor: default; }
+    #pause-open { width: 100%; flex: none; margin-bottom: 14px; }
+    #pause-menu { display: grid; gap: 6px; margin-bottom: 14px; }
+    #pause-menu .muted { font-size: 12px; color: var(--muted); margin: 0 0 2px; }
+    #paused { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--btn); margin-bottom: 14px; }
+    #paused b { font-weight: 600; }
+    #paused p { margin: 0; font-size: 12px; color: var(--muted); }
     [hidden] { display: none !important; }
   </style>
 </head>
 <body>
+  <div id="setup" hidden>
+    <h1>Bridge.ai is off</h1>
+    <p class="note" style="margin:0 0 14px">It doesn't read anything until setup is finished: what it reads, what it keeps, and who uses this browser.</p>
+    <button class="primary" id="finish-setup" style="width:100%">Finish setup</button>
+  </div>
+  <div id="ready" hidden>
   <div class="modes" role="radiogroup" aria-label="Mode">
     <button id="mode-parent" role="radio" aria-checked="false" title="Track your own feelings. Nothing is shared or blocked.">Parent</button>
     <button id="mode-child" role="radio" aria-checked="false" title="Protect a child: dangerous messages are held back and the week is shared with the parent dashboard.">Child</button>
+  </div>
+
+  <button id="pause-open" title="Stop recording feelings and time for a while">Pause tracking</button>
+  <div id="pause-menu" hidden>
+    <p class="muted">Pause tracking for</p>
+    <button data-pause="hour">1 hour</button>
+    <button data-pause="tomorrow">Until tomorrow</button>
+    <button data-pause="resume">Until I resume</button>
+    <button id="pause-cancel">Cancel</button>
+  </div>
+  <div id="paused" hidden>
+    <b id="paused-title"></b>
+    <p id="paused-note"></p>
+    <button class="primary" id="resume">Resume tracking</button>
   </div>
 
   <form id="pin" hidden>
@@ -70,8 +96,8 @@
   <p id="model" hidden></p>
   <div class="actions">
     <button id="dashboard">Dashboard</button>
-    <button id="reset" hidden title="Deletes this browser's Bridge.ai data (not the account or settings)">Reset</button>
-    <button id="sync-now" hidden>Sync now</button>
+    <button id="reset" hidden title="Deletes this browser's Bridge.ai data (not your settings or the PIN)">Reset</button>
+  </div>
   </div>
   <script src="popup.js"></script>
 </body>

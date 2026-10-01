@@ -17,6 +17,9 @@ wheels/
 # Node
 node_modules/
 
+# Packaged extension zips (npm run package): attached to GitHub Releases, not committed
+release/
+
 # Eval
 eval/data/labels_cache.jsonl
 .pytest_cache/

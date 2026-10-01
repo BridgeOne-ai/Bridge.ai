@@ -19,12 +19,12 @@ const entries = [
   { in: "src/content/gemini.ts", out: "content-gemini", format: "iife" },
   { in: "src/content/chatgpt.ts", out: "content-chatgpt", format: "iife" },
   { in: "src/content/session-only.ts", out: "content-session", format: "iife" },
-  { in: "src/content/dashboard.ts", out: "content-dashboard", format: "iife" },
   { in: "src/offscreen/offscreen.ts", out: "offscreen", format: "iife" },
   // A module worker: ONNX Runtime loads its WASM glue with import().
   { in: "src/model/worker.ts", out: "model-worker", format: "esm" },
   { in: "src/popup/popup.ts", out: "popup", format: "iife" },
   { in: "src/options/options.ts", out: "options", format: "iife" },
+  { in: "src/approve/approve.ts", out: "approve", format: "iife" },
   { in: "src/dashboard/dashboard.ts", out: "dashboard", format: "iife" },
   // The dashboard's styles, with its fonts (Inter, JetBrains Mono) bundled next to it.
   { in: "src/dashboard/dashboard.css", out: "dashboard", ext: "css" },

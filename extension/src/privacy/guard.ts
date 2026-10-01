@@ -4,14 +4,17 @@
 // and pastes before the page's own handlers. Detection is synchronous, so clean messages are never delayed.
 import { ALWAYS_BLOCKED, findInText, hideDetails, type Finding } from "./detect";
 import { checkFile } from "./files";
-import { showPhotoReminder, showPrivacyPause, showRelationshipWarning, showSafetyBlock, type PauseOutcome } from "../ui/privacy";
+import { showPhotoReminder, showPrivacyPause, showRelationshipWarning, showSafetyBlock, type Override, type PauseOutcome } from "../ui/privacy";
 import { onlyRelationship } from "../policy";
 
 export interface GuardOptions {
   root: ShadowRoot;
   selectors: { composer: string; sendButton: string };
-  isStrict: () => Promise<boolean>;
   isChild: () => Promise<boolean>;
+  // False once Bridge.ai is turned off (consent withdrawn): every check steps aside. Default: always on.
+  isActive?: () => boolean;
+  // Child mode: a parent approves sending something as typed, with the PIN, outside the page.
+  askParent: (what: "message" | "file", findings: Finding[]) => Promise<boolean>;
   report: (what: "message" | "file", findings: Finding[], outcome: PauseOutcome) => void;
   // Safety gate (core/src/safety.ts, answered by the service worker). Optional so the guard works on its own.
   checkSafety?: (text: string) => Promise<{ block: boolean; warn?: boolean; categories: string[]; whereabouts?: boolean }>;
@@ -19,15 +22,16 @@ export interface GuardOptions {
 
 const EDITABLE = '[contenteditable="true"], [contenteditable=""], textarea';
 
-// Cards, SSNs and bank numbers never get a "send anyway", whatever the strict setting.
-const mustBlock = async (findings: Finding[], isStrict: () => Promise<boolean>) =>
-  findings.some((f) => ALWAYS_BLOCKED.includes(f)) || (await isStrict());
+// Who may send it as typed. Cards, SSNs and bank numbers: nobody, in either mode (masking still works).
+const overrideFor = (findings: Finding[], child: boolean): Override =>
+  findings.some((f) => ALWAYS_BLOCKED.includes(f)) ? "none" : child ? "parent" : "self";
 
 // How long "Send without these details" waits after rewriting the box before it clicks send.
 const SETTLE_MS = 150;
 
 export function startPrivacyGuard(opts: GuardOptions): void {
   const { root, selectors } = opts;
+  const active = () => opts.isActive?.() ?? true;
 
   // The message box is whatever the teen is actually typing in (from the events themselves), so the
   // guard keeps working when the site renames its classes. selectors.composer is only a fallback.
@@ -83,9 +87,16 @@ export function startPrivacyGuard(opts: GuardOptions): void {
         .finally(() => { checking = false; });
       if (verdict.block) {
         console.info(`[Bridge.ai] safety gate blocked a message [${verdict.categories}]`);
-        opts.report("message", [onlyRelationship(verdict.categories) ? "ai_relationship" : "unsafe"], "held");
-        await showSafetyBlock(root, verdict.categories);
-        return box?.focus();
+        // Only a message purely about the chatbot as a friend or partner can be approved by a parent, so
+        // only that one waits for the outcome before it's counted; anything dangerous is held, full stop.
+        if (!onlyRelationship(verdict.categories)) {
+          opts.report("message", ["unsafe"], "held");
+          await showSafetyBlock(root, verdict.categories);
+          return box?.focus();
+        }
+        const outcome = await showSafetyBlock(root, verdict.categories, () => opts.askParent("message", ["ai_relationship"]));
+        opts.report("message", ["ai_relationship"], outcome);
+        if (outcome !== "sent") return box?.focus();
       }
       // Parent mode: making the chatbot a friend or partner is the adult's call, after a warning.
       if (verdict.warn) {
@@ -96,7 +107,11 @@ export function startPrivacyGuard(opts: GuardOptions): void {
       // Where they live or go to school, or that they're alone: the model found it in the meaning, so
       // there's nothing to cut out. The user can edit the message or send it anyway.
       if (verdict.whereabouts) {
-        const outcome = await showPrivacyPause(root, { what: "message", findings: ["whereabouts"], strict: false, child: await opts.isChild() });
+        const child = await opts.isChild();
+        const outcome = await showPrivacyPause(root, {
+          what: "message", findings: ["whereabouts"], override: overrideFor(["whereabouts"], child), child,
+          askParent: () => opts.askParent("message", ["whereabouts"]),
+        });
         opts.report("message", ["whereabouts"], outcome);
         if (outcome !== "sent") return box?.focus();
       }
@@ -126,9 +141,12 @@ export function startPrivacyGuard(opts: GuardOptions): void {
   }
 
   async function pauseSend(box: HTMLElement | null, findings: Finding[]) {
-    const strict = await mustBlock(findings, opts.isStrict);
+    const child = await opts.isChild();
     const hidden = box ? hideDetails(textOf(box)) : null;
-    let outcome = await showPrivacyPause(root, { what: "message", findings, strict, hidden, child: await opts.isChild() });
+    let outcome = await showPrivacyPause(root, {
+      what: "message", findings, override: overrideFor(findings, child), hidden, child,
+      askParent: () => opts.askParent("message", findings),
+    });
     if (outcome === "hidden" && box && hidden) {
       setText(box, hidden);
       // Gemini's editor copies the box into its own state a moment later; clicking send before
@@ -145,6 +163,7 @@ export function startPrivacyGuard(opts: GuardOptions): void {
   }
 
   function interceptSend(e: Event, box: HTMLElement | null) {
+    if (!active()) return;
     const text = textOf(box);
     if (approvedText !== null && text === approvedText) { approvedText = null; return; }
     approvedText = null;
@@ -190,8 +209,11 @@ export function startPrivacyGuard(opts: GuardOptions): void {
       return true;
     }
     for (const c of flagged) {
-      const strict = await mustBlock(c.findings, opts.isStrict);
-      const outcome = await showPrivacyPause(root, { what: "file", findings: c.findings, fileName: c.name, strict, child: await opts.isChild() });
+      const child = await opts.isChild();
+      const outcome = await showPrivacyPause(root, {
+        what: "file", findings: c.findings, fileName: c.name, override: overrideFor(c.findings, child), child,
+        askParent: () => opts.askParent("file", c.findings),
+      });
       opts.report("file", c.findings, outcome);
       if (outcome !== "sent") return false;
     }
@@ -202,7 +224,7 @@ export function startPrivacyGuard(opts: GuardOptions): void {
 
   addEventListener("change", (e) => {
     const input = e.target;
-    if (released.has(e) || !(input instanceof HTMLInputElement) || input.type !== "file" || !input.files?.length) return;
+    if (!active() || released.has(e) || !(input instanceof HTMLInputElement) || input.type !== "file" || !input.files?.length) return;
     hold(e);
     void reviewFiles([...input.files]).then((ok) => {
       if (!ok) { input.value = ""; return; }
@@ -220,7 +242,7 @@ export function startPrivacyGuard(opts: GuardOptions): void {
 
   addEventListener("drop", (e) => {
     const files = [...(e.dataTransfer?.files ?? [])];
-    if (released.has(e) || !files.length || !(e.target instanceof EventTarget)) return;
+    if (!active() || released.has(e) || !files.length || !(e.target instanceof EventTarget)) return;
     hold(e);
     const target = e.target;
     void reviewFiles(files).then((ok) => {
@@ -233,7 +255,7 @@ export function startPrivacyGuard(opts: GuardOptions): void {
 
   addEventListener("paste", (e) => {
     const files = [...(e.clipboardData?.files ?? [])];
-    if (released.has(e) || !files.length || !(e.target instanceof EventTarget)) return;
+    if (!active() || released.has(e) || !files.length || !(e.target instanceof EventTarget)) return;
     hold(e);
     const target = e.target;
     void reviewFiles(files).then((ok) => {
