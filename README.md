@@ -45,9 +45,9 @@ Open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and 
 
 ## Website and releases
 
-The download site is in `website/` (plain HTML and CSS, no trackers) and is deployed to GitHub Pages by `.github/workflows/pages.yml` whenever it changes on `main`. Its Download button always gets the newest GitHub Release.
+The download site is in `website/` (plain HTML and CSS, no trackers) and is deployed to GitHub Pages by `.github/workflows/pages.yml` whenever the site or the extension changes on `main`. That workflow also builds the extension zip into the site (`download/bridge-ai-extension.zip`), so the Download buttons always work. Clicking one starts the download and opens a step-by-step install guide (`website/install.js`): Chrome doesn't let websites install extensions, so the guide walks through Developer mode and Load unpacked. A design preview in a minimal, editorial style is at `website/editorial/`.
 
-To publish a new version: bump `version` in `extension/static/manifest.json`, commit, then push a matching tag (`git tag v0.3.0 && git push origin v0.3.0`). `.github/workflows/release.yml` runs the tests, builds the zip (`npm run package`, which you can also run locally) and attaches it to the release.
+To keep a versioned history on GitHub too: bump `version` in `extension/static/manifest.json`, commit, then push a matching tag (`git tag v0.3.0 && git push origin v0.3.0`). `.github/workflows/release.yml` runs the tests, builds the zip (`npm run package`, which you can also run locally) and attaches it to the release.
 
 ## Tests
 

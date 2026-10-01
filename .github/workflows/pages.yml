@@ -1,11 +1,13 @@
-# Deploys the website (website/) to GitHub Pages whenever it changes on main.
+# Deploys the website (website/) to GitHub Pages, with the extension zip built in, whenever the site or
+# the extension changes on main. The Download buttons link to download/bridge-ai-extension.zip on the
+# site itself, so a download always works, even before any GitHub Release exists.
 # One-time setup: repo Settings → Pages → Build and deployment → Source: "GitHub Actions".
 name: Website
 
 on:
   push:
     branches: [main]
-    paths: ["website/**", ".github/workflows/pages.yml"]
+    paths: ["website/**", "extension/**", "core/**", "package-lock.json", "scripts/package.mjs", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -25,6 +27,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run package
+      - name: Put the zip on the site
+        run: mkdir -p website/download && cp release/bridge-ai-extension.zip website/download/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

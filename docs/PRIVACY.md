@@ -2,7 +2,7 @@
 
 <!-- Same text as website/privacy.html: change both together. -->
 
-_Last updated: 10/01/2026· _Contact: vivekchenganassery@gmail.com
+_Last updated: 10/01/2026 · Contact: vivekchenganassery@gmail.com_
 
 Bridge.ai is a Chrome extension that notices how you feel when you talk to AI chatbots, and helps protect personal information and children. **Everything it does happens on your own computer. Bridge.ai has no server, no account, and never sends what you write anywhere.**
 
@@ -73,4 +73,4 @@ If what Bridge.ai reads, keeps or sends ever changes, we will update this policy
 
 ## Contact
 
-Questions about this policy: [CONTACT EMAIL].
+Questions about this policy: vivekchenganassery@gmail.com.
