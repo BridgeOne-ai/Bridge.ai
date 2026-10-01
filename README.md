@@ -34,7 +34,7 @@ Works on Gemini and ChatGPT. Claude and Character.AI get time tracking. Details:
 
 ## Running it
 
-**You need:** Node 20+ and Chrome. Nothing else: there's no server to run.
+**You need:** Node 24 (or 22.13+) and Chrome. Nothing else: there's no server to run.
 
 ```bash
 npm install
@@ -42,6 +42,12 @@ npm run build             # core + extension
 ```
 
 Open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and pick `extension/dist`. The Options page opens with the setup screen: read what Bridge.ai reads and keeps, choose Parent or Child mode (Child mode asks you to set a parent PIN), and agree. Then chat on [gemini.google.com](https://gemini.google.com) or [chatgpt.com](https://chatgpt.com). The first time, the model downloads once (about 200 MB); until it's ready, only the built-in phrase checks run.
+
+## Website and releases
+
+The download site is in `website/` (plain HTML and CSS, no trackers) and is deployed to GitHub Pages by `.github/workflows/pages.yml` whenever it changes on `main`. Its Download button always gets the newest GitHub Release.
+
+To publish a new version: bump `version` in `extension/static/manifest.json`, commit, then push a matching tag (`git tag v0.3.0 && git push origin v0.3.0`). `.github/workflows/release.yml` runs the tests, builds the zip (`npm run package`, which you can also run locally) and attaches it to the release.
 
 ## Tests
 

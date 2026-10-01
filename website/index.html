@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bridge.ai: feel better about how you use AI chatbots</title>
+  <meta name="description" content="A Chrome extension that notices how you feel in AI chats and protects personal information, using a model that runs on your own computer. Nothing you write leaves it." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- The Download button always gets the newest GitHub Release (.github/workflows/release.yml). -->
+  <header class="nav">
+    <div class="wrap">
+      <a class="brand" href="#top" aria-label="Bridge.ai home">
+        <span class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 15c2-6 5-6 9 0s7 6 9 0"/></svg></span>
+        Bridge.ai
+      </a>
+      <nav aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#modes">Modes</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#install">Install</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="btn primary small" href="https://github.com/BridgeOne-ai/Bridge.ai/releases/latest/download/bridge-ai-extension.zip">Download</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <div class="wrap">
+        <div>
+          <span class="pill"><i></i>Runs on your computer · No account · No server</span>
+          <h1>Feel better about how you use AI chatbots.</h1>
+          <p class="lead">Bridge.ai is a Chrome extension that notices how you feel when you talk to ChatGPT and Gemini, catches personal information before you send it, and protects children from risky conversations. A model inside your browser does the reading, so nothing you write ever leaves your computer.</p>
+          <div class="cta">
+            <a class="btn primary" href="https://github.com/BridgeOne-ai/Bridge.ai/releases/latest/download/bridge-ai-extension.zip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+              Download for Chrome
+            </a>
+            <a class="btn ghost" href="https://www.youtube.com/watch?v=xlw9YbbXYfk">Watch the demo</a>
+          </div>
+          <p class="cta-note">Free and open source · Chrome on desktop · <a href="#install">How to install</a></p>
+        </div>
+
+        <div class="mock" aria-label="Example: Bridge.ai pausing a message that contains a phone number">
+          <div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p class="bubble bot">Sure! Tell me a bit about yourself and I can help you plan the party.</p>
+          <p class="bubble">I'm 14, text me at 352-555-0142 and I'll send the details</p>
+          <div class="guard">
+            <b><span aria-hidden="true">!</span>This looks personal</b>
+            <p>I'm 14, text me at <span class="tag">[phone number removed]</span> and I'll send the details</p>
+            <div class="row"><span class="a">Send without these details</span><span class="b">Ask a parent to send</span></div>
+          </div>
+          <div class="shield" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+            <span><b>Protected by Bridge.ai</b><span class="muted">Nothing you write leaves this computer</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="alt" id="how">
+      <div class="wrap">
+        <p class="eyebrow">How it works</p>
+        <h2>Understands meaning, not just keywords</h2>
+        <p class="intro">Each message is read by Google's EmbeddingGemma, a small model that runs inside Chrome on your graphics card or processor. It downloads once and then works offline.</p>
+        <div class="grid three">
+          <div class="card">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.3 1.5 3.5 1.5 3.5-1.5 3.5-1.5M9 9.5h.01M15 9.5h.01"/></svg></div>
+            <h3>Feelings and interests</h3>
+            <p>27 feelings, from stress and loneliness to pride and calm, and what you chat about: sports, studies, games, music and more.</p>
+          </div>
+          <div class="card">
+            <div class="icon mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/></svg></div>
+            <h3>Personal info guard</h3>
+            <p>Phone numbers, emails, addresses, IDs and passwords are caught before sending, with one click to remove them. Card and Social Security numbers can never be sent.</p>
+          </div>
+          <div class="card">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-6 4 4 8-9"/></svg></div>
+            <h3>Patterns over a week</h3>
+            <p>A rolling 7-day score notices slow drifts, like relying on a chatbot in place of people, even when no single message is alarming.</p>
+          </div>
+          <div class="card">
+            <div class="icon mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+            <h3>Gentle nudges</h3>
+            <p>A short card when use starts to look unhealthy, at most three a day: "An AI can listen, but it can't show up for you. Who in your life can?"</p>
+          </div>
+          <div class="card">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+            <h3>A private dashboard</h3>
+            <p>Your week at a glance: feelings by hour and day, interests, time per chatbot, and what's behind the pattern score. It reads only this browser's own data.</p>
+          </div>
+          <div class="card">
+            <div class="icon mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/></svg></div>
+            <h3>Visible, never hidden</h3>
+            <p>A small "Monitored by Bridge.ai" or "Protected by Bridge.ai" notice sits on every chat it covers. You can pause it any time.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="modes">
+      <div class="wrap">
+        <p class="eyebrow">Two modes</p>
+        <h2>For you, or to protect a child</h2>
+        <p class="intro">Chosen once at setup, and switchable later. Leaving Child mode needs the parent PIN.</p>
+        <div class="grid two">
+          <div class="card mode">
+            <div class="who">For adults</div>
+            <h3>Parent mode</h3>
+            <ul>
+              <li>See which feelings and interests come up in your AI chats</li>
+              <li>A 7-day pattern score with what's behind it</li>
+              <li>Personal info is paused: send without it, or send anyway</li>
+              <li>A warning before treating a chatbot as a friend or partner</li>
+              <li>Nothing is ever blocked; you decide</li>
+            </ul>
+          </div>
+          <div class="card mode">
+            <div class="who">Set up by a parent</div>
+            <h3>Child mode</h3>
+            <ul>
+              <li>Messages about self-harm, meeting strangers, sexual content or violence are held back before the chatbot gets them</li>
+              <li>Personal info can be sent with the details removed, or as typed once a parent approves with the PIN</li>
+              <li>The PIN is typed in Bridge.ai's own window, never on the chat site</li>
+              <li>A parent sees only counts of what was held back, never the child's words, feelings or topics</li>
+              <li>The child always sees "Protected by Bridge.ai": protection, not surveillance</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="alt" id="privacy">
+      <div class="wrap">
+        <p class="eyebrow">Privacy</p>
+        <h2>Nothing you write leaves your computer</h2>
+        <p class="intro">Bridge.ai has no server and no account. It can't share what it never collects.</p>
+        <div class="promise">
+          <div class="card"><b>0</b><p>messages stored. Text is checked in memory, then discarded.</p></div>
+          <div class="card"><b>0</b><p>servers, accounts, analytics or trackers.</p></div>
+          <div class="card"><b>14</b><p>days at most that counts are kept, on your computer only.</p></div>
+          <div class="card"><b>1</b><p>download: the model itself (about 200 MB), once. Nothing about you is sent.</p></div>
+        </div>
+        <p class="muted" style="margin-top:24px">Nothing runs until you've read what Bridge.ai reads and keeps, and agreed. You can turn it off and delete everything at any time. <a href="privacy.html">Read the privacy policy</a>.</p>
+      </div>
+    </section>
+
+    <section id="install">
+      <div class="wrap">
+        <p class="eyebrow">Install</p>
+        <h2>Install in about two minutes</h2>
+        <p class="intro">Bridge.ai isn't in the Chrome Web Store yet, so it's installed as an "unpacked" extension. Chrome on a computer only, not on phones.</p>
+        <ol class="steps">
+          <li>
+            <div>
+              <h3>Download and unzip</h3>
+              <p>Download <code>bridge-ai-extension.zip</code> and unzip it. You'll get a folder called <code>bridge-ai</code>. Keep it somewhere permanent, like Documents: Chrome loads Bridge.ai from that folder.</p>
+              <a class="btn primary small" href="https://github.com/BridgeOne-ai/Bridge.ai/releases/latest/download/bridge-ai-extension.zip">Download the latest version</a>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>Open Chrome's extensions page and turn on Developer mode</h3>
+              <p>Type <code>chrome://extensions</code> in the address bar and press Enter. Turn on <b>Developer mode</b> in the top-right corner.</p>
+              <span class="ui" aria-hidden="true">Developer mode <span class="toggle"></span></span>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>Load the folder</h3>
+              <p>Click <b>Load unpacked</b> and choose the <code>bridge-ai</code> folder from step 1.</p>
+              <span class="ui" aria-hidden="true"><span class="fakebtn">Load unpacked</span></span>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>Finish setup</h3>
+              <p>Bridge.ai's setup page opens. Read what it reads and keeps, choose Parent or Child mode (Child mode asks you to create a parent PIN), and agree. Then pin Bridge.ai from the puzzle-piece menu in Chrome's toolbar and open ChatGPT or Gemini.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="note" role="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+          <p><b>Updating:</b> download the new zip, replace the old <code>bridge-ai</code> folder with the new one, then click the reload arrow on Bridge.ai's card in <code>chrome://extensions</code>. Your settings and PIN are kept. <a href="https://github.com/BridgeOne-ai/Bridge.ai/releases">All versions and what changed</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="alt" id="faq">
+      <div class="wrap">
+        <p class="eyebrow">Questions</p>
+        <h2>Good to know</h2>
+        <details>
+          <summary>Which sites does it work on?</summary>
+          <p>ChatGPT (chatgpt.com) and Gemini (gemini.google.com) get everything: feelings, interests, the personal info guard and Child-mode protection. On Claude and Character.AI it only counts time; messages aren't read. It doesn't read any other website.</p>
+        </details>
+        <details>
+          <summary>Why does Chrome show a "Developer mode" warning?</summary>
+          <p>Chrome shows it for every extension that isn't installed from the Chrome Web Store. It's expected for an unpacked install. You can read all of Bridge.ai's code on <a href="https://github.com/BridgeOne-ai/Bridge.ai">GitHub</a>.</p>
+        </details>
+        <details>
+          <summary>Can a child turn Child mode off?</summary>
+          <p>Not from Bridge.ai itself: leaving Child mode, pausing it, or approving a held-back message needs the parent PIN. But a determined child could use an Incognito window, another browser, or remove the extension from <code>chrome://extensions</code>. For a locked-down setup, use Chrome's family controls (Google Family Link) alongside Bridge.ai.</p>
+        </details>
+        <details>
+          <summary>Does it work offline? Is it slow?</summary>
+          <p>After the one-time model download it works offline. Checks are usually quick, faster with a graphics card. Until the model has downloaded, built-in phrase checks run instead.</p>
+        </details>
+        <details>
+          <summary>Does it work in other browsers or on phones?</summary>
+          <p>It's built for Chrome on computers (Windows, Mac and Linux), and has been tested most on Mac. Other Chromium-based browsers may work but aren't tested. It doesn't run on phones or tablets.</p>
+        </details>
+        <details>
+          <summary>Is it a safety or medical tool?</summary>
+          <p>No. Bridge.ai is a supplement to talking with each other, not a safety guarantee, a medical tool or a crisis service. If you or someone you know is in crisis, contact local emergency services or a crisis line (in the US, call or text 988).</p>
+        </details>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="band">
+          <div>
+            <h2>Try Bridge.ai</h2>
+            <p>Free, open source, and private by design.</p>
+          </div>
+          <a class="btn" href="https://github.com/BridgeOne-ai/Bridge.ai/releases/latest/download/bridge-ai-extension.zip">Download for Chrome</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div>
+        <p><b>Bridge.ai</b>, started at ShellHacks 2026 by Rukaiya Khan, Krishna Niveditha, Atul and Vivek C.</p>
+        <p>MIT licensed. The on-device model, EmbeddingGemma, is provided under Google's <a href="https://ai.google.dev/gemma/terms">Gemma Terms of Use</a>.</p>
+        <p>ChatGPT, Gemini, Claude, Character.AI and Chrome are trademarks of their owners. Bridge.ai isn't affiliated with or endorsed by them.</p>
+      </div>
+      <div>
+        <p><a href="privacy.html">Privacy policy</a></p>
+        <p><a href="https://github.com/BridgeOne-ai/Bridge.ai">Source code on GitHub</a></p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

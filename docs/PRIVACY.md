@@ -1,6 +1,8 @@
 # Bridge.ai Privacy Policy
 
-_Last updated: [DATE]_ · _Contact: [CONTACT EMAIL]_
+<!-- Same text as website/privacy.html: change both together. -->
+
+_Last updated: 10/01/2026· _Contact: vivekchenganassery@gmail.com
 
 Bridge.ai is a Chrome extension that notices how you feel when you talk to AI chatbots, and helps protect personal information and children. **Everything it does happens on your own computer. Bridge.ai has no server, no account, and never sends what you write anywhere.**
 
@@ -40,6 +42,8 @@ Daily counts are kept for at most 14 days and then deleted automatically. You ca
 **Nothing about you.** The only network request Bridge.ai makes is a one-time download of the on-device model (about 200 MB) from Hugging Face (huggingface.co), when it's first used. That download doesn't include any of your messages or information. Hugging Face's own privacy policy applies to that download.
 
 Bridge.ai has no analytics, no advertising, no crash reporting, and no tracking. It does not sell, share or transfer any data, because it does not collect any.
+
+The website (bridgeone-ai.github.io/Bridge.ai) has no analytics or trackers either. It's hosted on GitHub Pages, and downloads come from GitHub, whose own privacy policy applies to those requests.
 
 ## Child mode
 
